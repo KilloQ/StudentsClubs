@@ -1,0 +1,49 @@
+.home-container {
+    padding: 32px 48px;
+}
+
+h2 {
+    margin-bottom: 16px;
+    font-size: 20px;
+    color: #333;
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 40px;
+}
+
+.chip {
+    padding: 8px 16px;
+    border-radius: 12px;
+    background: #eee;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
+    font-size: 14px;
+}
+
+.chip:hover {
+    background: #dcdcdc;
+}
+
+.chip.active {
+    background: #0d6efd;
+    color: white;
+}
+
+.cards-grid {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 28px;
+}
+
+.no-clubs-message {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-size: 16px;
+}
