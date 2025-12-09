@@ -24,7 +24,7 @@ export default function TeacherProfilePage() {
     };
 
     const handleManageClubClick = (clubId: string) => {
-        console.log("Переход к управлению кружком:", clubId);
+        navigate(`/manage-club/${clubId}`);
     };
 
     const teacherStats = {

@@ -118,3 +118,138 @@
     opacity: 0.9;
     transform: translateY(-1px);
 }
+
+.clubs-schedule-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 20px;
+}
+
+.my-clubs-section,
+.schedule-section {
+    background: white;
+    padding: 32px;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 1px solid #eaeaea;
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 24px 0;
+    color: #333;
+}
+
+.club-details {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.club-item {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #eaeaea;
+}
+
+.club-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.club-name {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    color: #333;
+}
+
+.club-stats {
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    background: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid #eaeaea;
+}
+
+.club-teacher {
+    font-size: 14px;
+    color: #666;
+    margin: 0 0 16px 0;
+}
+
+.attendance-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.attendance-text {
+    font-size: 14px;
+    color: #666;
+}
+
+.attendance-percentage {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0d6efd;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #eaeaea;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0080ff, #0066ff);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.schedule-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.schedule-item {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #eaeaea;
+    min-height: 100px;
+    position: relative;
+}
+
+.schedule-club {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+}
+
+.schedule-details {
+    display: grid;
+    grid-template-columns: 100px 60px 1fr;
+    gap: 12px;
+    font-size: 14px;
+    color: #666;
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+}

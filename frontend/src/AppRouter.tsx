@@ -5,6 +5,7 @@ import HomePage from "./pages/Home/HomePage";
 import StudentProfilePage from "./pages/Profile/StudentProfilePage";
 import TeacherProfilePage from "./pages/Profile/TeacherProfilePage";
 import ClubPage from "./pages/Club/ClubPage";
+import ClubManagementPage from "./pages/Management/ClubManagementPage";
 import "./NotFound.css";
 
 export default function AppRouter() {
@@ -17,6 +18,7 @@ export default function AppRouter() {
             <Route path="/profile" element={<StudentProfilePage />} />
             <Route path="/teacher-profile" element={<TeacherProfilePage />} />
             <Route path="/club/:clubName" element={<ClubPage />} />
+            <Route path="/manage-club/:clubId" element={<ClubManagementPage />} />
             <Route path="*" element={
                 <div className="not-found-container">
                     404 — страница не найдена
