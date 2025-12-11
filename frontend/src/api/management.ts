@@ -12,7 +12,7 @@ export interface StudentAttendanceInfo {
 
 export interface MarkAttendanceRequest {
     student_id: number;
-    date: string; // YYYY-MM-DD
+    date: string;
 }
 
 export interface ClubSettings {
@@ -37,7 +37,7 @@ export interface ClubSettingsUpdate {
 
 export interface ScheduleItemCreate {
     day_of_week: string;
-    start_time: string; // HH:MM
+    start_time: string; 
     location: string;
 }
 

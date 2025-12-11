@@ -9,8 +9,7 @@ from app.api.auth import get_password_hash
 from app.core.config import settings
 
 async def init_db():
-    # Создаем движок
-    # Убеждаемся, что используется asyncpg для PostgreSQL
+
     db_url = settings.DATABASE_URL
     if db_url.startswith("postgresql://"):
         db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
@@ -19,22 +18,19 @@ async def init_db():
     
     engine = create_async_engine(db_url, echo=True)
     
-    # Создаем все таблицы
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     
-    # Создаем сессию
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     
     async with async_session() as session:
-        # Проверяем, есть ли уже преподаватель
+
         from sqlalchemy import select
         result = await session.execute(select(User).where(User.is_teacher == True))
         existing_teacher = result.scalar_one_or_none()
         
         if not existing_teacher:
-            # Создаем преподавателя по умолчанию
-            # Логин: teacher, Пароль: teacher123
+
             teacher = User(
                 username="teacher",
                 full_name="Иванов Сергей Петрович",

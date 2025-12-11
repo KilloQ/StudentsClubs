@@ -7,35 +7,36 @@
     display: flex;
     align-items: center;
     padding: 20px 60px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
     gap: 24px;
+    width: 100%;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    background: white;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 
 .back-button {
-    background: none;
+    background: transparent;
     border: none;
-    font-size: 16px;
+    color: #1A1A1A;
+    font-size: 18px;
     cursor: pointer;
-    color: #0d6efd;
-    padding: 10px 20px;
-    font-weight: 600;
-    white-space: nowrap;
-    border-radius: 12px;
-    transition: all 0.3s ease;
-}
-
-.back-button:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: translateX(-3px);
+    padding: 8px 0;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .profile-title {
     font-size: 24px;
     font-weight: 700;
     margin: 0;
-    color: white;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    color: #0d6efd;
 }
 
 .profile-content {
@@ -65,7 +66,7 @@
     margin: 0;
     font-weight: 600;
     padding: 6px 16px;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: linear-gradient(135deg, #3c5be8 0%, #312af7 100%);
     color: white;
     border-radius: 20px;
     display: inline-block;
@@ -84,7 +85,7 @@
     padding: 36px 28px;
     border-radius: 20px;
     text-align: center;
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+    box-shadow: 0 8px 24px rgba(142, 143, 148, 0.15);
     border: 2px solid rgba(102, 126, 234, 0.1);
     transition: all 0.3s ease;
 }
@@ -97,7 +98,7 @@
 .stat-number {
     font-size: 48px;
     font-weight: 800;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #0d6efd;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -106,7 +107,7 @@
 
 .stat-label {
     font-size: 18px;
-    color: #555;
+    color: #333;
     font-weight: 600;
 }
 
@@ -121,12 +122,12 @@
 
 .no-clubs-message {
     font-size: 18px;
-    color: #666;
+    color: #333;
     margin-bottom: 32px;
 }
 
 .explore-clubs-button {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #3c5be8 0%, #312af7 100%);
     color: white;
     border: none;
     padding: 18px 48px;
@@ -136,7 +137,6 @@
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 

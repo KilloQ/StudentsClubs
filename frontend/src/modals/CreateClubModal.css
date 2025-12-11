@@ -18,7 +18,7 @@
     border-radius: 24px;
     width: 100%;
     max-width: 550px;
-    box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 20px 60px rgba(156, 162, 189, 0.4);
     animation: modalAppear 0.3s ease-out;
     border: 2px solid rgba(102, 126, 234, 0.2);
 }
@@ -40,7 +40,7 @@
     align-items: center;
     padding: 28px 36px;
     border-bottom: 2px solid #f0f0f0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #8195f0 0%, #4c41e1 50%, #3606f4 100%);
     border-radius: 24px 24px 0 0;
 }
 

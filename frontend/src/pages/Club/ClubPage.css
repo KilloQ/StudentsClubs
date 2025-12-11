@@ -3,22 +3,22 @@
     background: #f7f7f7;
 }
 
-/* Кнопка Назад под панелью */
 .club-page-back {
     padding: 20px 48px;
-    background: none;
-    background: #f7f7f7;
+    background: transparent;
 }
 
 .back-button {
-    background: none;
+    background: transparent;
     border: none;
-    font-size: 16px;
+    color: #1A1A1A;
+    font-size: 18px;
     cursor: pointer;
-    color: #0d6efd;
     padding: 8px 0;
     font-weight: 500;
-    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .back-button:hover {
@@ -42,7 +42,7 @@
 
 /* Верхняя часть с градиентом */
 .club-header-gradient {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #3c5be8 0%, #312af7 100%);
     padding: 40px 32px;
     color: white;
 }
@@ -129,7 +129,7 @@
     font-size: 24px;
     font-weight: 700;
     margin: 0 0 20px 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #3c5be8 0%, #312af7 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -140,10 +140,10 @@
 .club-description {
     font-size: 17px;
     line-height: 1.8;
-    color: #666;
+    color: #4f4f4f;
     margin: 0;
     padding: 20px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    background: #f8f9fa;
     border-radius: 12px;
 }
 
@@ -159,7 +159,7 @@
     grid-template-columns: 140px 90px 1fr;
     gap: 20px;
     padding: 18px 24px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    background: #f8f9fa;
     border-radius: 12px;
     align-items: center;
     border: 2px solid rgba(102, 126, 234, 0.1);
@@ -193,7 +193,7 @@
 /* Кнопка записи */
 .join-button {
     width: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #3c5be8 0%, #312af7 100%);
     color: white;
     border: none;
     padding: 18px 24px;
@@ -217,10 +217,9 @@
     transform: none;
 }
 
-/* Кнопка отписки */
 .leave-button {
     width: 100%;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: linear-gradient(135deg, #ff1529 0%, #f5576c 100%);
     color: white;
     border: none;
     padding: 18px 24px;

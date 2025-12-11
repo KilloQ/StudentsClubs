@@ -25,7 +25,6 @@ export default function ClubManagementPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    // Данные для вкладки Студенты
     const [students, setStudents] = useState<StudentAttendanceInfo[]>([]);
     
     // Данные для вкладки Посещаемость
@@ -179,7 +178,7 @@ export default function ClubManagementPage() {
                 <button className="back-button" onClick={handleBackClick}>
                     ← Назад к моим кружкам
                 </button>
-                <h1 className="management-title">{settings?.title || "Кружок"}</h1>
+                <h1 className="management-title">{settings?.title || "Панель преподавателя"}</h1>
             </div>
 
             {/* Основной контент */}

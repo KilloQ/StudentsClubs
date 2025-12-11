@@ -82,6 +82,9 @@ async def get_student_profile(
         )
         total_classes_for_club = classes_result.scalar() or 0
         
+        total_classes += total_classes_for_club
+        total_attended += visits
+        
         # Если нет занятий, то посещаемость 0%
         attendance_percentage = (visits / total_classes_for_club * 100) if total_classes_for_club > 0 else 0
         
@@ -111,12 +114,15 @@ async def get_student_profile(
             ))
     
     # Общий процент посещаемости
-    attendance_percentage = (total_visits / (total_classes * my_clubs) * 100) if (total_classes * my_clubs) > 0 else 0
+    overall_attendance_percentage = (
+        total_attended / total_classes * 100
+        if total_classes > 0 else 0
+    )
     
     stats = StudentStats(
         my_clubs=my_clubs,
         total_visits=total_visits,
-        attendance_percentage=round(attendance_percentage, 1)
+        attendance_percentage=round(overall_attendance_percentage, 1)
     )
     
     return StudentProfileResponse(

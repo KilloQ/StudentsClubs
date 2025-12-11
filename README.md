@@ -40,32 +40,13 @@ python -m venv venv
 ```bash
 venv\Scripts\activate
 ```
-- Linux/Mac:
-```bash
-source venv/bin/activate
-```
 
 4. Установите зависимости:
 ```bash
 pip install -r requirements.txt
 ```
 
-5. Создайте базу данных PostgreSQL:
-   - Откройте psql или pgAdmin
-   - Выполните: `CREATE DATABASE students_clubs;`
-
-6. Создайте файл `.env` в директории `backend`:
-```env
-DATABASE_URL=postgresql+asyncpg://postgres:ваш_пароль@localhost:5432/students_clubs
-```
-
-   Где:
-   - `postgres` - имя пользователя PostgreSQL (замените на своё, если используете другого пользователя)
-   - `ваш_пароль` - пароль пользователя PostgreSQL
-   - `localhost:5432` - хост и порт (обычно localhost:5432)
-   - `students_clubs` - имя базы данных
-
-   **Подробная инструкция по настройке БД и .env файла:** см. файл `SETUP.md`
+5. Создайте базу данных PostgreSQL
 
 6. Инициализируйте базу данных:
 ```bash
