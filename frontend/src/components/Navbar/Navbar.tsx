@@ -1,16 +1,23 @@
 import "./Navbar.css";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { User, LogOut } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function Navbar() {
     const navigate = useNavigate();
+    const { user, logout } = useAuth();
 
     const handleLogout = () => {
+        logout();
         navigate("/login");
     };
 
     const handleProfileClick = () => {
-        navigate("/profile");
+        if (user?.is_teacher) {
+            navigate("/teacher-profile");
+        } else {
+            navigate("/profile");
+        }
     };
 
     return (
@@ -20,7 +27,7 @@ export default function Navbar() {
             </div>
 
             <div className="navbar-right">
-                <span className="username">Журавлев Алексей Евгеньевич</span>
+                {user && <span className="username">{user.full_name}</span>}
 
                 <User 
                     className="nav-icon" 

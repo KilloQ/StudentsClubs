@@ -1,32 +1,96 @@
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar";
+import { getClub, joinClub, leaveClub } from "../../api/clubs";
+import type { ClubDetail } from "../../api/clubs";
+import { useAuth } from "../../contexts/AuthContext";
 import "./ClubPage.css";
 
 export default function ClubPage() {
     const navigate = useNavigate();
-    const { clubName } = useParams();
+    const { clubId } = useParams();
+    const { user } = useAuth();
+    const [clubData, setClubData] = useState<ClubDetail | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [joining, setJoining] = useState(false);
+    const [leaving, setLeaving] = useState(false);
+
+    useEffect(() => {
+        if (clubId) {
+            loadClub();
+        }
+    }, [clubId]);
+
+    const loadClub = async () => {
+        try {
+            const data = await getClub(Number(clubId));
+            setClubData(data);
+        } catch (err: any) {
+            setError(err.message || "Ошибка загрузки кружка");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleBackClick = () => {
         navigate("/home");
     };
 
-    const handleJoinClick = () => {
-        console.log("Запись на кружок:", clubName);
+    const handleJoinClick = async () => {
+        if (!clubId) return;
+        setJoining(true);
+        setError("");
+        try {
+            await joinClub(Number(clubId));
+            // Обновляем данные кружка
+            await loadClub();
+        } catch (err: any) {
+            setError(err.message || "Ошибка записи на кружок");
+        } finally {
+            setJoining(false);
+        }
     };
 
-    const clubData = {
-        title: "Футбол",
-        category: "Спортивные",
-        participants: "2/30",
-        teacher: "Левин Алексей Евгеньевич",
-        recruitment: "открыт",
-        description: "Присоединяйтесь к нашему футбольному клубу! Мы проводим тренировки 3 раза в неделю, участвуем в межвузовских турнирах.",
-        schedule: [
-            { day: "Понедельник", time: "17:00", location: "Авиамоторная, Спортзал" },
-            { day: "Среда", time: "17:00", location: "Авиамоторная, Спортзал" },
-            { day: "Пятница", time: "16:00", location: "Авиамоторная, Спортзал" }
-        ]
+    const handleLeaveClick = async () => {
+        if (!clubId) return;
+        setLeaving(true);
+        setError("");
+        try {
+            await leaveClub(Number(clubId));
+            // Обновляем данные кружка
+            await loadClub();
+        } catch (err: any) {
+            setError(err.message || "Ошибка отписки от кружка");
+        } finally {
+            setLeaving(false);
+        }
     };
+
+    if (loading) {
+        return (
+            <>
+                <Navbar />
+                <div className="loading-message">Загрузка...</div>
+            </>
+        );
+    }
+
+    if (error && !clubData) {
+        return (
+            <>
+                <Navbar />
+                <div className="error-message">{error}</div>
+            </>
+        );
+    }
+
+    if (!clubData) {
+        return null;
+    }
+
+    const participants = `${clubData.current_students}/${clubData.max_students}`;
+    const recruitmentStatus = clubData.recruitment_open ? "открыт" : "закрыт";
 
     return (
         <div className="club-page-container">
@@ -53,46 +117,73 @@ export default function ClubPage() {
                                 <div className="stat-icon">👥</div>
                                 <div className="stat-info">
                                     <div className="stat-label">Участников</div>
-                                    <div className="stat-value">{clubData.participants}</div>
+                                    <div className="stat-value">{participants}</div>
                                 </div>
                             </div>
                             <div className="club-stat">
                                 <div className="stat-icon">👨‍🏫</div>
                                 <div className="stat-info">
                                     <div className="stat-label">Преподаватель</div>
-                                    <div className="stat-value">{clubData.teacher}</div>
+                                    <div className="stat-value">{clubData.owner_name}</div>
                                 </div>
                             </div>
                             <div className="club-stat">
-                                <div className="stat-icon">{clubData.recruitment === "открыт" ? "✅" : "❌"}</div>
+                                <div className="stat-icon">{clubData.recruitment_open ? "✅" : "❌"}</div>
                                 <div className="stat-info">
                                     <div className="stat-label">Набор</div>
-                                    <div className="stat-value">{clubData.recruitment}</div>
+                                    <div className="stat-value">{recruitmentStatus}</div>
                                 </div>
                             </div>
                         </div>
 
                         <div className="club-section">
                             <h3 className="section-title">О кружке</h3>
-                            <p className="club-description">{clubData.description}</p>
+                            <p className="club-description">{clubData.description || "Описание отсутствует"}</p>
                         </div>
 
                         <div className="club-section">
                             <h3 className="section-title">Расписание</h3>
                             <div className="schedule-list">
-                                {clubData.schedule.map((item, index) => (
-                                    <div key={index} className="schedule-item">
-                                        <span className="schedule-day">{item.day}</span>
-                                        <span className="schedule-time">{item.time}</span>
-                                        <span className="schedule-location">{item.location}</span>
-                                    </div>
-                                ))}
+                                {clubData.schedules && clubData.schedules.length > 0 ? (
+                                    clubData.schedules.map((item) => (
+                                        <div key={item.id} className="schedule-item">
+                                            <span className="schedule-day">{item.day_of_week}</span>
+                                            <span className="schedule-time">{item.start_time}</span>
+                                            <span className="schedule-location">{item.location}</span>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div>Расписание не установлено</div>
+                                )}
                             </div>
                         </div>
 
-                        <button className="join-button" onClick={handleJoinClick}>
-                            Записаться
-                        </button>
+                        {!user?.is_teacher && (
+                            <>
+                                {clubData.is_member ? (
+                                    <button 
+                                        className="leave-button" 
+                                        onClick={handleLeaveClick}
+                                        disabled={leaving}
+                                    >
+                                        {leaving ? "Отписка..." : "Отписаться от кружка"}
+                                    </button>
+                                ) : clubData.recruitment_open ? (
+                                    <button 
+                                        className="join-button" 
+                                        onClick={handleJoinClick}
+                                        disabled={joining}
+                                    >
+                                        {joining ? "Запись..." : "Записаться"}
+                                    </button>
+                                ) : (
+                                    <div className="recruitment-closed-message">
+                                        Набор в кружок закрыт
+                                    </div>
+                                )}
+                            </>
+                        )}
+                        {error && <div className="error-message">{error}</div>}
                     </div>
                 </div>
             </div>

@@ -6,6 +6,7 @@
 /* Кнопка Назад под панелью */
 .club-page-back {
     padding: 20px 48px;
+    background: none;
     background: #f7f7f7;
 }
 
@@ -82,14 +83,23 @@
 .club-stat {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px;
+    gap: 16px;
+    padding: 20px;
     background: #f8f9fa;
-    border-radius: 12px;
+    border-radius: 16px;
+    border: 2px solid rgba(102, 126, 234, 0.1);
+    transition: all 0.3s ease;
+}
+
+.club-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    border-color: rgba(102, 126, 234, 0.3);
 }
 
 .stat-icon {
-    font-size: 24px;
+    font-size: 32px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
 }
 
 .stat-info {
@@ -98,14 +108,15 @@
 }
 
 .stat-label {
-    font-size: 12px;
+    font-size: 14px;
     color: #666;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    font-weight: 500;
 }
 
 .stat-value {
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 700;
     color: #333;
 }
 
@@ -115,17 +126,25 @@
 }
 
 .section-title {
-    font-size: 20px;
-    font-weight: 600;
-    margin: 0 0 16px 0;
-    color: #333;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 20px 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    padding-bottom: 12px;
+    border-bottom: 3px solid #667eea;
 }
 
 .club-description {
-    font-size: 16px;
-    line-height: 1.6;
+    font-size: 17px;
+    line-height: 1.8;
     color: #666;
     margin: 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 12px;
 }
 
 /* Расписание */
@@ -137,43 +156,103 @@
 
 .schedule-item {
     display: grid;
-    grid-template-columns: 120px 80px 1fr;
-    gap: 16px;
-    padding: 12px 16px;
-    background: #f8f9fa;
-    border-radius: 8px;
+    grid-template-columns: 140px 90px 1fr;
+    gap: 20px;
+    padding: 18px 24px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 12px;
     align-items: center;
+    border: 2px solid rgba(102, 126, 234, 0.1);
+    transition: all 0.3s ease;
+}
+
+.schedule-item:hover {
+    transform: translateX(4px);
+    border-color: rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
 }
 
 .schedule-day {
-    font-weight: 600;
-    color: #333;
+    font-weight: 700;
+    color: #667eea;
+    font-size: 16px;
 }
 
 .schedule-time {
-    color: #666;
+    color: #764ba2;
+    font-weight: 600;
+    font-size: 15px;
 }
 
 .schedule-location {
-    color: #666;
+    color: #555;
+    font-size: 15px;
+    font-weight: 500;
 }
 
 /* Кнопка записи */
 .join-button {
     width: 100%;
-    background: linear-gradient(90deg, #0080ff, #0066ff);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    padding: 16px;
+    padding: 18px 24px;
     border-radius: 12px;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
     cursor: pointer;
-    transition: 0.3s;
+    transition: all 0.3s ease;
     margin-top: 24px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
 .join-button:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.join-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Кнопка отписки */
+.leave-button {
+    width: 100%;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border: none;
+    padding: 18px 24px;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 24px;
+    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+}
+
+.leave-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 87, 108, 0.5);
+}
+
+.leave-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.recruitment-closed-message {
+    width: 100%;
+    padding: 18px 24px;
+    background: #f8f9fa;
+    border: 2px solid #dee2e6;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 500;
+    color: #6c757d;
+    margin-top: 24px;
 }

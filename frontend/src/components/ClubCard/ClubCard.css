@@ -1,41 +1,52 @@
 .club-card {
     width: 100%;
-    max-width: 360px;
-    border-radius: 16px;
+    border-radius: 20px;
     overflow: hidden;
     background: #fff;
     cursor: pointer;
-    transition: 0.25s;
-    border: 1px solid #eaeaea;
+    transition: all 0.3s ease;
+    border: 2px solid #f0f0f0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .club-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(102, 126, 234, 0.25);
+    border-color: #667eea;
+}
+
+.club-image {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
 }
 
 .club-gradient {
     width: 100%;
-    height: 180px;
-    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    height: 220px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
 }
 
 .club-info {
-    padding: 16px;
+    padding: 24px;
 }
 
 .club-info h3 {
-    margin: 0 0 8px 0;
-    font-size: 18px;
-    font-weight: 600;
+    margin: 0 0 12px 0;
+    font-size: 22px;
+    font-weight: 700;
     color: #333;
+    -webkit-background-clip: text;
+    background-clip: text;
 }
 
 .club-tag {
     background: #f8f9fa;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
     color: #666;
     border: 1px solid #eaeaea;
+    display: inline-block;
 }

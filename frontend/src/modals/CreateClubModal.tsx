@@ -1,13 +1,15 @@
 import { useState } from "react";
+import type { CreateClubRequest } from "../api/clubs";
 import "./CreateClubModal.css";
 
 interface CreateClubModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onCreate: (clubData: any) => void;
+    onCreate: (clubData: CreateClubRequest) => void;
+    categories?: string[];
 }
 
-export default function CreateClubModal({ isOpen, onClose, onCreate }: CreateClubModalProps) {
+export default function CreateClubModal({ isOpen, onClose, onCreate, categories = [] }: CreateClubModalProps) {
     const [formData, setFormData] = useState({
         title: "",
         description: "",
@@ -15,25 +17,16 @@ export default function CreateClubModal({ isOpen, onClose, onCreate }: CreateClu
         maxStudents: ""
     });
 
-    const categories = [
-        "Спортивные",
-        "Творчество",
-        "Точные науки",
-        "Инжиниринг",
-        "БПЛА",
-        "Информационная безопасность",
-        "Связь",
-        "Программирование"
-    ];
-
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        onCreate({
-            ...formData,
-            maxStudents: parseInt(formData.maxStudents)
-        });
+        const clubData: CreateClubRequest = {
+            title: formData.title,
+            description: formData.description || undefined,
+            category: formData.category,
+            max_students: parseInt(formData.maxStudents)
+        };
+        await onCreate(clubData);
         setFormData({ title: "", description: "", category: "", maxStudents: "" });
-        onClose();
     };
 
     const handleClose = () => {

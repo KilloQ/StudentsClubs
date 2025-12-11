@@ -1,49 +1,176 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+    getClubStudents,
+    markAttendance,
+    getClubSettings,
+    updateClubSettings,
+    addScheduleItem,
+    deleteScheduleItem,
+    getClubStats
+} from "../../api/management";
+import type {
+    StudentAttendanceInfo,
+    ClubSettings,
+    MarkAttendanceRequest,
+    ClubSettingsUpdate,
+    ScheduleItemCreate
+} from "../../api/management";
 import "./ClubManagementPage.css";
 
 export default function ClubManagementPage() {
     const navigate = useNavigate();
     const { clubId } = useParams();
     const [activeTab, setActiveTab] = useState<"students" | "attendance" | "settings">("students");
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
-    const clubData = {
-        id: "1",
-        title: "Футбол",
-        totalStudents: 2,
-        maxStudents: 30,
-        description: "Присоединяйтесь к нашему футбольному клубу!",
-        recruitmentOpen: true,
-        schedule: [
-            { id: "1", day: "Понедельник", time: "17:00", location: "Авиамоторная, Спортзал" },
-            { id: "2", day: "Среда", time: "17:00", location: "Авиамоторная, Спортзал" },
-        ]
+    // Данные для вкладки Студенты
+    const [students, setStudents] = useState<StudentAttendanceInfo[]>([]);
+    
+    // Данные для вкладки Посещаемость
+    const [attendanceDate, setAttendanceDate] = useState("");
+    const [selectedStudentId, setSelectedStudentId] = useState<number | "">("");
+    const [markingAttendance, setMarkingAttendance] = useState(false);
+
+    // Данные для вкладки Настройки
+    const [settings, setSettings] = useState<ClubSettings | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [newSchedule, setNewSchedule] = useState({
+        day_of_week: "",
+        start_time: "",
+        location: ""
+    });
+
+    // Статистика
+    const [totalStudents, setTotalStudents] = useState(0);
+
+    useEffect(() => {
+        if (clubId) {
+            loadData();
+        }
+    }, [clubId, activeTab]);
+
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            if (activeTab === "students") {
+                const studentsData = await getClubStudents(Number(clubId));
+                setStudents(studentsData);
+            } else if (activeTab === "settings") {
+                const settingsData = await getClubSettings(Number(clubId));
+                setSettings(settingsData);
+            }
+            const stats = await getClubStats(Number(clubId));
+            setTotalStudents(stats.total_students);
+        } catch (err: any) {
+            setError(err.message || "Ошибка загрузки данных");
+        } finally {
+            setLoading(false);
+        }
     };
-
-    const students = [
-        { id: "1", name: "Иванов Иван Иванович", visits: 5, totalClasses: 10, percentage: 50 },
-        { id: "2", name: "Петров Петр Петрович", visits: 8, totalClasses: 10, percentage: 80 },
-    ];
 
     const handleBackClick = () => {
         navigate("/teacher-profile");
     };
 
-    const handleSaveChanges = () => {
-        console.log("Сохранение изменений");
+    const handleMarkAttendance = async () => {
+        if (!attendanceDate || !selectedStudentId) {
+            setError("Заполните все поля");
+            return;
+        }
+
+        setMarkingAttendance(true);
+        try {
+            const request: MarkAttendanceRequest = {
+                student_id: Number(selectedStudentId),
+                date: attendanceDate
+            };
+            await markAttendance(Number(clubId), request);
+            setAttendanceDate("");
+            setSelectedStudentId("");
+            setError("");
+            // Обновляем список студентов
+            if (activeTab === "students") {
+                await loadData();
+            }
+        } catch (err: any) {
+            setError(err.message || "Ошибка отметки посещения");
+        } finally {
+            setMarkingAttendance(false);
+        }
     };
 
-    const handleAddSchedule = () => {
-        console.log("Добавление занятия");
+    const handleSaveChanges = async () => {
+        if (!settings) return;
+
+        setSaving(true);
+        try {
+            const update: ClubSettingsUpdate = {
+                title: settings.title,
+                description: settings.description,
+                max_students: settings.max_students,
+                recruitment_open: settings.recruitment_open
+            };
+            await updateClubSettings(Number(clubId), update);
+            setError("");
+            await loadData();
+        } catch (err: any) {
+            setError(err.message || "Ошибка сохранения");
+        } finally {
+            setSaving(false);
+        }
     };
 
-    const handleDeleteSchedule = (id: string) => {
-        console.log("Удаление занятия:", id);
+    const handleAddSchedule = async () => {
+        if (!newSchedule.day_of_week || !newSchedule.start_time || !newSchedule.location) {
+            setError("Заполните все поля расписания");
+            return;
+        }
+
+        try {
+            const scheduleData: ScheduleItemCreate = {
+                day_of_week: newSchedule.day_of_week,
+                start_time: newSchedule.start_time,
+                location: newSchedule.location
+            };
+            await addScheduleItem(Number(clubId), scheduleData);
+            setNewSchedule({ day_of_week: "", start_time: "", location: "" });
+            setError("");
+            await loadData();
+        } catch (err: any) {
+            setError(err.message || "Ошибка добавления занятия");
+        }
     };
 
-    const handleMarkAttendance = () => {
-        console.log("Отметка посещения");
+    const handleDeleteSchedule = async (scheduleId: number) => {
+        try {
+            await deleteScheduleItem(Number(clubId), scheduleId);
+            await loadData();
+        } catch (err: any) {
+            setError(err.message || "Ошибка удаления занятия");
+        }
     };
+
+    const handleToggleRecruitment = () => {
+        if (settings) {
+            setSettings({ ...settings, recruitment_open: !settings.recruitment_open });
+        }
+    };
+
+    const daysOfWeek = [
+        "Понедельник",
+        "Вторник",
+        "Среда",
+        "Четверг",
+        "Пятница",
+        "Суббота",
+        "Воскресенье"
+    ];
+
+    if (loading && !settings && activeTab === "settings") {
+        return <div className="loading-message">Загрузка...</div>;
+    }
 
     return (
         <div className="management-container">
@@ -52,14 +179,14 @@ export default function ClubManagementPage() {
                 <button className="back-button" onClick={handleBackClick}>
                     ← Назад к моим кружкам
                 </button>
-                <h1 className="management-title">{clubData.title}</h1>
+                <h1 className="management-title">{settings?.title || "Кружок"}</h1>
             </div>
 
             {/* Основной контент */}
             <div className="management-content">
                 {/* Блок Всего студентов */}
                 <div className="total-students-card">
-                    <div className="total-students-number">{clubData.totalStudents}</div>
+                    <div className="total-students-number">{totalStudents}</div>
                     <div className="total-students-label">Всего студентов</div>
                 </div>
 
@@ -85,35 +212,41 @@ export default function ClubManagementPage() {
                     </button>
                 </div>
 
+                {error && <div className="error-message">{error}</div>}
+
                 {/* Контент вкладок */}
                 <div className="tab-content">
                     {activeTab === "students" && (
                         <div className="students-tab">
                             <h3 className="tab-title">Список студентов ({students.length})</h3>
-                            <div className="students-list">
-                                <div className="list-header">
-                                    <div className="header-cell">Студент</div>
-                                    <div className="header-cell">Посещений</div>
-                                    <div className="header-cell">Процент</div>
-                                </div>
-                                {students.map((student) => (
-                                    <div key={student.id} className="student-row">
-                                        <div className="student-cell name">{student.name}</div>
-                                        <div className="student-cell visits">
-                                            {student.visits}/{student.totalClasses}
-                                        </div>
-                                        <div className="student-cell percentage">
-                                            <div className="percentage-value">{student.percentage}%</div>
-                                            <div className="progress-bar">
-                                                <div 
-                                                    className="progress-fill"
-                                                    style={{ width: `${student.percentage}%` }}
-                                                ></div>
+                            {loading ? (
+                                <div className="loading-message">Загрузка...</div>
+                            ) : (
+                                <div className="students-list">
+                                    <div className="list-header">
+                                        <div className="header-cell">Студент</div>
+                                        <div className="header-cell">Посещений</div>
+                                        <div className="header-cell">Процент</div>
+                                    </div>
+                                    {students.map((student) => (
+                                        <div key={student.student_id} className="student-row">
+                                            <div className="student-cell name">{student.student_name}</div>
+                                            <div className="student-cell visits">
+                                                {student.visits}/{student.total_classes}
+                                            </div>
+                                            <div className="student-cell percentage">
+                                                <div className="percentage-value">{student.attendance_percentage.toFixed(1)}%</div>
+                                                <div className="progress-bar">
+                                                    <div 
+                                                        className="progress-fill"
+                                                        style={{ width: `${student.attendance_percentage}%` }}
+                                                    ></div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -123,27 +256,40 @@ export default function ClubManagementPage() {
                             <div className="attendance-form">
                                 <div className="form-group">
                                     <label className="form-label">Дата занятия</label>
-                                    <input type="date" className="form-input" />
+                                    <input 
+                                        type="date" 
+                                        className="form-input"
+                                        value={attendanceDate}
+                                        onChange={(e) => setAttendanceDate(e.target.value)}
+                                    />
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Студент</label>
-                                    <select className="form-select">
+                                    <select 
+                                        className="form-select"
+                                        value={selectedStudentId}
+                                        onChange={(e) => setSelectedStudentId(e.target.value ? Number(e.target.value) : "")}
+                                    >
                                         <option value="">Выберите студента</option>
                                         {students.map((student) => (
-                                            <option key={student.id} value={student.id}>
-                                                {student.name}
+                                            <option key={student.student_id} value={student.student_id}>
+                                                {student.student_name}
                                             </option>
                                         ))}
                                     </select>
                                 </div>
-                                <button className="mark-attendance-button" onClick={handleMarkAttendance}>
-                                    Отметить посещение
+                                <button 
+                                    className="mark-attendance-button" 
+                                    onClick={handleMarkAttendance}
+                                    disabled={markingAttendance}
+                                >
+                                    {markingAttendance ? "Отметка..." : "Отметить посещение"}
                                 </button>
                             </div>
                         </div>
                     )}
 
-                    {activeTab === "settings" && (
+                    {activeTab === "settings" && settings && (
                         <div className="settings-tab">
                             <h3 className="tab-title">Настройки кружка</h3>
                             <div className="settings-form">
@@ -152,14 +298,16 @@ export default function ClubManagementPage() {
                                     <input 
                                         type="text" 
                                         className="form-input" 
-                                        defaultValue={clubData.title}
+                                        value={settings.title}
+                                        onChange={(e) => setSettings({ ...settings, title: e.target.value })}
                                     />
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Описание</label>
                                     <textarea 
                                         className="form-textarea"
-                                        defaultValue={clubData.description}
+                                        value={settings.description || ""}
+                                        onChange={(e) => setSettings({ ...settings, description: e.target.value })}
                                     />
                                 </div>
                                 <div className="form-group">
@@ -167,16 +315,17 @@ export default function ClubManagementPage() {
                                     <input 
                                         type="number" 
                                         className="form-input" 
-                                        defaultValue={clubData.maxStudents}
+                                        value={settings.max_students}
+                                        onChange={(e) => setSettings({ ...settings, max_students: Number(e.target.value) })}
                                         min="1"
                                     />
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Набор студентов</label>
-                                    <div className="toggle-switch">
+                                    <div className="toggle-switch" onClick={handleToggleRecruitment}>
                                         <span className="toggle-label">Закрыт</span>
                                         <div className="toggle-slider">
-                                            <div className={`toggle-knob ${clubData.recruitmentOpen ? "open" : ""}`}></div>
+                                            <div className={`toggle-knob ${settings.recruitment_open ? "open" : ""}`}></div>
                                         </div>
                                         <span className="toggle-label">Открыт</span>
                                     </div>
@@ -187,19 +336,28 @@ export default function ClubManagementPage() {
                                     <h4 className="editor-title">Расписание</h4>
                                     <div className="schedule-form">
                                         <div className="form-row">
-                                            <select className="form-input-small" defaultValue="">
+                                            <select 
+                                                className="form-input-small"
+                                                value={newSchedule.day_of_week}
+                                                onChange={(e) => setNewSchedule({ ...newSchedule, day_of_week: e.target.value })}
+                                            >
                                                 <option value="">День</option>
-                                                <option value="monday">Понедельник</option>
-                                                <option value="tuesday">Вторник</option>
-                                                <option value="wednesday">Среда</option>
-                                                <option value="thursday">Четверг</option>
-                                                <option value="friday">Пятница</option>
+                                                {daysOfWeek.map((day) => (
+                                                    <option key={day} value={day}>{day}</option>
+                                                ))}
                                             </select>
-                                            <input type="time" className="form-input-small" />
+                                            <input 
+                                                type="time" 
+                                                className="form-input-small"
+                                                value={newSchedule.start_time}
+                                                onChange={(e) => setNewSchedule({ ...newSchedule, start_time: e.target.value })}
+                                            />
                                             <input 
                                                 type="text" 
                                                 className="form-input-medium" 
                                                 placeholder="Аудитория"
+                                                value={newSchedule.location}
+                                                onChange={(e) => setNewSchedule({ ...newSchedule, location: e.target.value })}
                                             />
                                         </div>
                                         <button className="add-schedule-button" onClick={handleAddSchedule}>
@@ -209,11 +367,11 @@ export default function ClubManagementPage() {
 
                                     {/* Список занятий */}
                                     <div className="schedule-list">
-                                        {clubData.schedule.map((item) => (
+                                        {settings.schedules.map((item) => (
                                             <div key={item.id} className="schedule-item">
                                                 <div className="schedule-info">
-                                                    <span className="schedule-day">{item.day}</span>
-                                                    <span className="schedule-time">{item.time}</span>
+                                                    <span className="schedule-day">{item.day_of_week}</span>
+                                                    <span className="schedule-time">{item.start_time}</span>
                                                     <span className="schedule-location">{item.location}</span>
                                                 </div>
                                                 <button 
@@ -227,8 +385,12 @@ export default function ClubManagementPage() {
                                     </div>
                                 </div>
 
-                                <button className="save-changes-button" onClick={handleSaveChanges}>
-                                    Сохранить изменения
+                                <button 
+                                    className="save-changes-button" 
+                                    onClick={handleSaveChanges}
+                                    disabled={saving}
+                                >
+                                    {saving ? "Сохранение..." : "Сохранить изменения"}
                                 </button>
                             </div>
                         </div>

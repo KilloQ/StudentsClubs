@@ -1,36 +1,51 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar";
 import ClubCard from "../../components/ClubCard/ClubCard";
+import { getClubs, getCategories } from "../../api/clubs";
+import type { Club } from "../../api/clubs";
 import "./HomePage.css";
 
 export default function HomePage() {
     const [activeCategory, setActiveCategory] = useState("Все");
+    const [categories, setCategories] = useState<string[]>(["Все"]);
+    const [clubs, setClubs] = useState<Club[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const navigate = useNavigate();
 
-    const categories = [
-        "Все",
-        "Спортивные",
-        "Творчество",
-        "Точные науки",
-        "Инжиниринг",
-        "БПЛА",
-        "Информационная безопасность",
-        "Связь",
-        "Программирование"
-    ];
+    useEffect(() => {
+        loadData();
+    }, []);
 
-    const clubs = [
-        { title: "Футбол", category: "Спортивные" },
-        { title: "Волейбол", category: "Спортивные" },
-        { title: "Баскетбол", category: "Спортивные" },
-        { title: "Шахматы", category: "Спортивные" },
-        { title: "Туризм", category: "Спортивные" },
-        { title: "Настольный теннис", category: "Спортивные" },
-        { title: "Разработка мобильных приложений", category: "Программирование" },
-    ];
+    useEffect(() => {
+        loadClubs();
+    }, [activeCategory]);
 
-    const filteredClubs = activeCategory === "Все" 
-        ? clubs 
-        : clubs.filter(club => club.category === activeCategory);
+    const loadData = async () => {
+        try {
+            const cats = await getCategories();
+            setCategories(cats);
+        } catch (err: any) {
+            setError(err.message || "Ошибка загрузки категорий");
+        }
+    };
+
+    const loadClubs = async () => {
+        setLoading(true);
+        try {
+            const clubsData = await getClubs(activeCategory === "Все" ? undefined : activeCategory);
+            setClubs(clubsData);
+        } catch (err: any) {
+            setError(err.message || "Ошибка загрузки кружков");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleClubClick = (clubId: number) => {
+        navigate(`/club/${clubId}`);
+    };
 
     return (
         <>
@@ -51,20 +66,30 @@ export default function HomePage() {
                     ))}
                 </div>
 
-                <div className="cards-grid">
-                    {filteredClubs.map((club, i) => (
-                        <ClubCard
-                            key={i}
-                            title={club.title}
-                            category={club.category}
-                        />
-                    ))}
-                </div>
+                {loading ? (
+                    <div className="loading-message">Загрузка...</div>
+                ) : error ? (
+                    <div className="error-message">{error}</div>
+                ) : (
+                    <>
+                        <div className="cards-grid">
+                            {clubs.map((club) => (
+                                <ClubCard
+                                    key={club.id}
+                                    title={club.title}
+                                    category={club.category}
+                                    imageUrl={club.image_url}
+                                    onClick={() => handleClubClick(club.id)}
+                                />
+                            ))}
+                        </div>
 
-                {filteredClubs.length === 0 && (
-                    <div className="no-clubs-message">
-                        Кружки в данной категории не найдены
-                    </div>
+                        {clubs.length === 0 && (
+                            <div className="no-clubs-message">
+                                Кружки в данной категории не найдены
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </>

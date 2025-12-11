@@ -6,9 +6,9 @@
 .profile-header {
     display: flex;
     align-items: center;
-    padding: 16px 48px;
-    background: white;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    padding: 20px 60px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
     gap: 24px;
 }
 
@@ -18,20 +18,24 @@
     font-size: 16px;
     cursor: pointer;
     color: #0d6efd;
-    padding: 8px 0;
-    font-weight: 500;
+    padding: 10px 20px;
+    font-weight: 600;
     white-space: nowrap;
+    border-radius: 12px;
+    transition: all 0.3s ease;
 }
 
 .back-button:hover {
-    opacity: 0.8;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateX(-3px);
 }
 
 .profile-title {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 24px;
+    font-weight: 700;
     margin: 0;
-    color: #333;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .profile-content {
@@ -46,16 +50,26 @@
 }
 
 .user-name {
-    font-size: 24px;
-    font-weight: 600;
-    margin: 0 0 8px 0;
-    color: #333;
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0 0 12px 0;
+    background: #333;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .user-role {
-    font-size: 16px;
-    color: #666;
+    font-size: 18px;
+    color: #764ba2;
     margin: 0;
+    font-weight: 600;
+    padding: 6px 16px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border-radius: 20px;
+    display: inline-block;
+    box-shadow: 0 2px 8px rgba(245, 87, 108, 0.3);
 }
 
 .stats-grid {
@@ -66,25 +80,34 @@
 }
 
 .stat-card {
-    background: white;
-    padding: 32px 24px;
-    border-radius: 12px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    padding: 36px 28px;
+    border-radius: 20px;
     text-align: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    border: 1px solid #eaeaea;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+    border: 2px solid rgba(102, 126, 234, 0.1);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(102, 126, 234, 0.25);
 }
 
 .stat-number {
-    font-size: 36px;
-    font-weight: 700;
-    color: #0d6efd;
-    margin-bottom: 8px;
+    font-size: 48px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
 }
 
 .stat-label {
-    font-size: 16px;
-    color: #666;
-    font-weight: 500;
+    font-size: 18px;
+    color: #555;
+    font-weight: 600;
 }
 
 .no-clubs-section {
@@ -103,20 +126,23 @@
 }
 
 .explore-clubs-button {
-    background: linear-gradient(90deg, #0080ff, #0066ff);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    padding: 14px 40px;
-    border-radius: 20px;
-    font-size: 16px;
-    font-weight: 600;
+    padding: 18px 48px;
+    border-radius: 25px;
+    font-size: 18px;
+    font-weight: 700;
     cursor: pointer;
-    transition: 0.3s;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .explore-clubs-button:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
 }
 
 .clubs-schedule-container {
@@ -136,10 +162,15 @@
 }
 
 .section-title {
-    font-size: 20px;
-    font-weight: 600;
-    margin: 0 0 24px 0;
-    color: #333;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 28px 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    padding-bottom: 12px;
+    border-bottom: 3px solid #667eea;
 }
 
 .club-details {
