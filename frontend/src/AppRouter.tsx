@@ -5,6 +5,7 @@ import RegisterPage from "./pages/Auth/RegisterPage";
 import HomePage from "./pages/Home/HomePage";
 import StudentProfilePage from "./pages/Profile/StudentProfilePage";
 import TeacherProfilePage from "./pages/Profile/TeacherProfilePage";
+import AdminProfilePage from "./pages/Profile/AdminProfilePage";
 import ClubPage from "./pages/Club/ClubPage";
 import ClubManagementPage from "./pages/Management/ClubManagementPage";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -12,7 +13,7 @@ import "./NotFound.css";
 
 export default function AppRouter() {
     const location = useLocation();
-    console.log("🛣️ AppRouter: Текущий путь:", location.pathname);
+    console.log("AppRouter: Текущий путь:", location.pathname);
     
     return (
         <Routes>
@@ -21,8 +22,9 @@ export default function AppRouter() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><StudentProfilePage /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute requireStudent><StudentProfilePage /></ProtectedRoute>} />
             <Route path="/teacher-profile" element={<ProtectedRoute requireTeacher><TeacherProfilePage /></ProtectedRoute>} />
+            <Route path="/admin-profile" element={<ProtectedRoute requireAdmin><AdminProfilePage /></ProtectedRoute>} />
             <Route path="/club/:clubId" element={<ProtectedRoute><ClubPage /></ProtectedRoute>} />
             <Route path="/manage-club/:clubId" element={<ProtectedRoute requireTeacher><ClubManagementPage /></ProtectedRoute>} />
             <Route path="*" element={

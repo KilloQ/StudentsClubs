@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar";
+import { useAuth } from "../../contexts/AuthContext";
+import { canManageClubs } from "../../utils/permissions";
 import ClubCard from "../../components/ClubCard/ClubCard";
 import { getClubs, getCategories } from "../../api/clubs";
 import type { Club } from "../../api/clubs";
 import "./HomePage.css";
 
 export default function HomePage() {
+    const { user } = useAuth();
     const [activeCategory, setActiveCategory] = useState("Все");
     const [categories, setCategories] = useState<string[]>(["Все"]);
     const [clubs, setClubs] = useState<Club[]>([]);
@@ -45,6 +48,14 @@ export default function HomePage() {
 
     const handleClubClick = (clubId: number) => {
         navigate(`/club/${clubId}`);
+    };
+
+    const handleProfileShortcutClick = () => {
+        if (user?.role === "admin") {
+            navigate("/admin-profile");
+        } else {
+            navigate("/teacher-profile");
+        }
     };
 
     return (

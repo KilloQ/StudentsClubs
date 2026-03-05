@@ -4,6 +4,7 @@ import Navbar from "../../components/Navbar/Navbar";
 import { getClub, joinClub, leaveClub } from "../../api/clubs";
 import type { ClubDetail } from "../../api/clubs";
 import { useAuth } from "../../contexts/AuthContext";
+import { canJoinOrLeaveClub } from "../../utils/permissions";
 import "./ClubPage.css";
 
 export default function ClubPage() {
@@ -158,7 +159,7 @@ export default function ClubPage() {
                             </div>
                         </div>
 
-                        {!user?.is_teacher && (
+                        {canJoinOrLeaveClub(user) && (
                             <>
                                 {clubData.is_member ? (
                                     <button 

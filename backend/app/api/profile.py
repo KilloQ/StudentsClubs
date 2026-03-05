@@ -8,6 +8,7 @@ from app.schemas.profile import (
     StudentStats, TeacherStats, StudentClubInfo, TeacherClubInfo, ScheduleItem
 )
 from app.api.auth import get_current_user
+from app.core.permissions import require_permission, Permission
 from datetime import date
 
 router = APIRouter()
@@ -15,14 +16,9 @@ router = APIRouter()
 
 @router.get("/student", response_model=StudentProfileResponse)
 async def get_student_profile(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission(Permission.PROFILE_STUDENT)),
     db: AsyncSession = Depends(get_db)
 ):
-    if current_user.is_teacher:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="This endpoint is for students only"
-        )
     
     # Получаем все кружки студента
     memberships_result = await db.execute(
@@ -136,14 +132,9 @@ async def get_student_profile(
 
 @router.get("/teacher", response_model=TeacherProfileResponse)
 async def get_teacher_profile(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission(Permission.PROFILE_TEACHER)),
     db: AsyncSession = Depends(get_db)
 ):
-    if not current_user.is_teacher:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Этот endpoint предназначен только для преподавателей"
-        )
     
     # Получаем все кружки преподавателя
     clubs_result = await db.execute(

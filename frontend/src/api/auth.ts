@@ -22,6 +22,7 @@ export type UserResponse = {
     username: string;
     full_name: string;
     is_teacher: boolean;
+    role?: string;  // student, teacher, admin
 };
 
 // Сохранение токена в localStorage

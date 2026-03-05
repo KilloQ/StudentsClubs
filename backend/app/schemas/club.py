@@ -5,7 +5,7 @@ from datetime import time, date
 
 class ScheduleBase(BaseModel):
     day_of_week: str
-    start_time: str  # "HH:MM"
+    start_time: str
     location: str
 
 

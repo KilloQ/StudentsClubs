@@ -10,39 +10,39 @@ from app.schemas.management import (
     ClubSettingsUpdate, ScheduleItemCreate
 )
 from app.api.auth import get_current_user
+from app.core.permissions import is_admin, require_teacher
 
 router = APIRouter()
 
 
-async def verify_club_owner(club_id: int, user: User, db: AsyncSession) -> Club:
-    """Проверяет, что пользователь является владельцем кружка"""
+async def verify_club_owner_or_admin(club_id: int, user: User, db: AsyncSession) -> Club:
     result = await db.execute(select(Club).where(Club.id == club_id))
     club = result.scalar_one_or_none()
-    
+
     if not club:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Club not found"
         )
-    
+
+    if is_admin(user):
+        return club
     if club.owner_id != user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Вы не являетесь владельцем этого кружка"
         )
-    
     return club
 
 
 @router.get("/{club_id}/students", response_model=List[StudentAttendanceInfo])
 async def get_club_students(
     club_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_teacher),
     db: AsyncSession = Depends(get_db)
 ):
-    await verify_club_owner(club_id, current_user, db)
+    await verify_club_owner_or_admin(club_id, current_user, db)
     
-    # Получаем всех студентов кружка
     memberships_result = await db.execute(
         select(ClubMembership).where(ClubMembership.club_id == club_id)
     )
@@ -56,7 +56,6 @@ async def get_club_students(
         )
         student = student_result.scalar_one()
         
-        # Подсчитываем посещения
         visits_result = await db.execute(
             select(func.count(Attendance.id)).where(
                 and_(
@@ -67,7 +66,6 @@ async def get_club_students(
         )
         visits = visits_result.scalar() or 0
         
-        # Подсчитываем общее количество занятий (уникальные даты)
         total_classes_result = await db.execute(
             select(func.count(func.distinct(Attendance.date))).where(
                 Attendance.club_id == club_id
@@ -75,7 +73,6 @@ async def get_club_students(
         )
         total_classes = total_classes_result.scalar() or 0
         
-        # Процент посещаемости
         attendance_percentage = (visits / total_classes * 100) if total_classes > 0 else 0
         
         students_info.append(StudentAttendanceInfo(
@@ -93,10 +90,10 @@ async def get_club_students(
 async def mark_attendance(
     club_id: int,
     attendance_data: MarkAttendanceRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_teacher),
     db: AsyncSession = Depends(get_db)
 ):
-    await verify_club_owner(club_id, current_user, db)
+    await verify_club_owner_or_admin(club_id, current_user, db)
     
     # Проверяем, что студент состоит в кружке
     membership_result = await db.execute(
@@ -148,10 +145,10 @@ async def mark_attendance(
 @router.get("/{club_id}/settings")
 async def get_club_settings(
     club_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_teacher),
     db: AsyncSession = Depends(get_db)
 ):
-    club = await verify_club_owner(club_id, current_user, db)
+    club = await verify_club_owner_or_admin(club_id, current_user, db)
     
     # Получаем расписание
     schedules_result = await db.execute(
@@ -180,10 +177,10 @@ async def get_club_settings(
 async def update_club_settings(
     club_id: int,
     settings: ClubSettingsUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_teacher),
     db: AsyncSession = Depends(get_db)
 ):
-    club = await verify_club_owner(club_id, current_user, db)
+    club = await verify_club_owner_or_admin(club_id, current_user, db)
     
     if settings.title is not None:
         club.title = settings.title
@@ -204,10 +201,10 @@ async def update_club_settings(
 async def add_schedule_item(
     club_id: int,
     schedule_data: ScheduleItemCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_teacher),
     db: AsyncSession = Depends(get_db)
 ):
-    await verify_club_owner(club_id, current_user, db)
+    await verify_club_owner_or_admin(club_id, current_user, db)
     
     # Парсим время из строки "HH:MM"
     time_parts = schedule_data.start_time.split(":")
@@ -231,10 +228,10 @@ async def add_schedule_item(
 async def delete_schedule_item(
     club_id: int,
     schedule_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_teacher),
     db: AsyncSession = Depends(get_db)
 ):
-    await verify_club_owner(club_id, current_user, db)
+    await verify_club_owner_or_admin(club_id, current_user, db)
     
     # Проверяем, что расписание принадлежит этому кружку
     schedule_result = await db.execute(
@@ -262,10 +259,10 @@ async def delete_schedule_item(
 @router.get("/{club_id}/stats")
 async def get_club_stats(
     club_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_teacher),
     db: AsyncSession = Depends(get_db)
 ):
-    await verify_club_owner(club_id, current_user, db)
+    await verify_club_owner_or_admin(club_id, current_user, db)
     
     # Подсчитываем количество студентов
     students_count_result = await db.execute(

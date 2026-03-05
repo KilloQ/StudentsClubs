@@ -7,6 +7,7 @@ from app.db.database import get_db
 from app.db.models import Club, User, ClubMembership, Schedule
 from app.schemas.club import ClubCreate, ClubResponse, ClubDetailResponse, ScheduleCreate
 from app.api.auth import get_current_user
+from app.core.permissions import require_permission, Permission
 
 router = APIRouter()
 
@@ -23,7 +24,6 @@ async def get_clubs(
     result = await db.execute(query)
     clubs = result.scalars().all()
     
-    # Преобразуем в список словарей для сериализации
     clubs_list = []
     for club in clubs:
         club_dict = {
@@ -67,17 +67,14 @@ async def get_club(
             detail="Кружок не найден"
         )
     
-    # Получаем количество студентов
     members_count = await db.execute(
         select(func.count(ClubMembership.id)).where(ClubMembership.club_id == club_id)
     )
     current_students = members_count.scalar() or 0
     
-    # Получаем имя преподавателя
     owner_result = await db.execute(select(User).where(User.id == club.owner_id))
     owner = owner_result.scalar_one()
     
-    # Проверяем, является ли текущий пользователь членом кружка
     is_member = False
     if not current_user.is_teacher:
         membership_check = await db.execute(
@@ -122,14 +119,9 @@ async def get_club(
 @router.post("/", response_model=ClubResponse)
 async def create_club(
     club_data: ClubCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission(Permission.CLUB_CREATE)),
     db: AsyncSession = Depends(get_db)
 ):
-    if not current_user.is_teacher:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Только преподаватели могут создавать кружки"
-        )
     
     new_club = Club(
         title=club_data.title,
@@ -172,14 +164,9 @@ async def create_club(
 @router.post("/{club_id}/join")
 async def join_club(
     club_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission(Permission.MEMBERSHIP_JOIN)),
     db: AsyncSession = Depends(get_db)
 ):
-    if current_user.is_teacher:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Преподаватели не могут записываться на кружки"
-        )
     
     # Проверяем, существует ли кружок
     result = await db.execute(select(Club).where(Club.id == club_id))
@@ -241,50 +228,9 @@ async def join_club(
 @router.delete("/{club_id}/leave")
 async def leave_club(
     club_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission(Permission.MEMBERSHIP_LEAVE)),
     db: AsyncSession = Depends(get_db)
 ):
-    if current_user.is_teacher:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Преподаватели не могут покидать кружки"
-        )
-    
-    # Проверяем, состоит ли студент в кружке
-    membership_result = await db.execute(
-        select(ClubMembership).where(
-            and_(
-                ClubMembership.club_id == club_id,
-                ClubMembership.student_id == current_user.id
-            )
-        )
-    )
-    membership = membership_result.scalar_one_or_none()
-    
-    if not membership:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Вы не состоите в этом кружке"
-        )
-    
-    # Удаляем членство
-    await db.delete(membership)
-    await db.commit()
-    
-    return {"message": "Вы успешно покинули кружок"}
-
-
-@router.delete("/{club_id}/leave")
-async def leave_club(
-    club_id: int,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    if current_user.is_teacher:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Преподаватели не могут покидать кружки"
-        )
     
     # Проверяем, состоит ли студент в кружке
     membership_result = await db.execute(

@@ -53,9 +53,9 @@ pip install -r requirements.txt
 python -m app.db.init_db
 ```
 
-Это создаст таблицы и создаст преподавателя по умолчанию:
-- Логин: `teacher`
-- Пароль: `teacher123`
+Это создаст таблицы и пользователей по умолчанию:
+- Преподаватель: логин `teacher`, пароль `teacher123`, роль `teacher`
+- Администратор: логин `admin`, пароль `admin123`, роль `admin`
 
 7. Запустите сервер:
 ```bash
@@ -140,6 +140,10 @@ StudentsClubs/
 - `POST /clubs/` - Создать кружок (только для преподавателей)
 - `POST /clubs/{club_id}/join` - Записаться на кружок
 - `GET /clubs/categories/list` - Список категорий
+
+### Администратор (RBAC)
+- `GET /admin/users` - Список пользователей (только admin)
+- `PUT /admin/users/{user_id}/role` - Изменить роль пользователя (только admin)
 
 ### Профиль
 - `GET /profile/student` - Профиль студента

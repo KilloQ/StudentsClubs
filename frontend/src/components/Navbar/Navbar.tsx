@@ -13,7 +13,9 @@ export default function Navbar() {
     };
 
     const handleProfileClick = () => {
-        if (user?.is_teacher) {
+        if (user?.role === "admin") {
+            navigate("/admin-profile");
+        } else if (user?.is_teacher) {
             navigate("/teacher-profile");
         } else {
             navigate("/profile");

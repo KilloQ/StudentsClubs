@@ -14,14 +14,12 @@ from app.core.config import settings
 router = APIRouter()
 security = HTTPBearer()
 
-# Секретный ключ для JWT (в продакшене должен быть в .env)
 SECRET_KEY = "your-secret-key-change-in-production"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Проверяет пароль с использованием bcrypt"""
     return bcrypt.checkpw(
         plain_password.encode('utf-8'),
         hashed_password.encode('utf-8')
@@ -29,8 +27,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def get_password_hash(password: str) -> str:
-    """Хеширует пароль с использованием bcrypt"""
-    # Генерируем соль и хешируем пароль
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
     return hashed.decode('utf-8')
@@ -79,7 +75,6 @@ async def get_current_user(
 
 @router.post("/login", response_model=Token)
 async def login(user_data: UserLogin, db: AsyncSession = Depends(get_db)):
-    # Проверяем пользователя
     result = await db.execute(select(User).where(User.username == user_data.username))
     user = result.scalar_one_or_none()
     
@@ -90,8 +85,9 @@ async def login(user_data: UserLogin, db: AsyncSession = Depends(get_db)):
         )
     
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    role = getattr(user, "role", None) or ("teacher" if user.is_teacher else "student")
     access_token = create_access_token(
-        data={"sub": user.username, "user_id": user.id, "is_teacher": user.is_teacher},
+        data={"sub": user.username, "user_id": user.id, "is_teacher": user.is_teacher, "role": role},
         expires_delta=access_token_expires
     )
     
@@ -100,14 +96,12 @@ async def login(user_data: UserLogin, db: AsyncSession = Depends(get_db)):
 
 @router.post("/register", response_model=UserResponse)
 async def register(user_data: UserRegister, db: AsyncSession = Depends(get_db)):
-    # Проверяем, что пароли совпадают
     if user_data.password != user_data.password_confirm:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Пароли не совпадают"
         )
     
-    # Проверяем, что пользователь с таким username не существует
     result = await db.execute(select(User).where(User.username == user_data.username))
     existing_user = result.scalar_one_or_none()
     if existing_user:
@@ -116,19 +110,14 @@ async def register(user_data: UserRegister, db: AsyncSession = Depends(get_db)):
             detail="Пользователь с таким логином уже зарегистрирован"
         )
     
-    # Проверяем, не является ли это преподавателем
-    # Если пользователь пытается зарегистрироваться с логином существующего преподавателя,
-    # то он должен войти через логин, а не регистрироваться
-    # Все новые регистрации - это студенты
     is_teacher = False
-    
-    # Создаем нового пользователя
     hashed_password = get_password_hash(user_data.password)
     new_user = User(
         username=user_data.username,
         full_name=user_data.full_name,
         password_hash=hashed_password,
-        is_teacher=is_teacher
+        is_teacher=is_teacher,
+        role="student",
     )
     
     db.add(new_user)
@@ -140,4 +129,11 @@ async def register(user_data: UserRegister, db: AsyncSession = Depends(get_db)):
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
-    return current_user
+    role = getattr(current_user, "role", None) or ("teacher" if current_user.is_teacher else "student")
+    return UserResponse(
+        id=current_user.id,
+        username=current_user.username,
+        full_name=current_user.full_name,
+        is_teacher=current_user.is_teacher,
+        role=role,
+    )
