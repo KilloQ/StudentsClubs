@@ -1,22 +1,34 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
+from sqlalchemy import select
 import bcrypt
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from typing import Optional
 from app.db.database import get_db
 from app.db.models import User
-from app.schemas.auth import UserLogin, UserRegister, Token, UserResponse
+from app.schemas.auth import (
+    UserLogin,
+    UserRegister,
+    Token,
+    UserResponse,
+    RefreshRequest,
+    LogoutResponse,
+)
 from app.core.config import settings
+from app.services.auth_service import AuthService
 
 router = APIRouter()
 security = HTTPBearer()
 
-SECRET_KEY = "your-secret-key-change-in-production"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
+
+
+def get_auth_service(db: AsyncSession = Depends(get_db)) -> AuthService:
+    return AuthService(db)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -60,38 +72,66 @@ async def get_current_user(
     
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
+        token_type = payload.get("type")
+        if token_type and token_type != "access":
+            raise credentials_exception
+
+        sub = payload.get("sub")
+        if sub is None:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    
-    result = await db.execute(select(User).where(User.username == username))
-    user = result.scalar_one_or_none()
+
+    # Поддерживаем: новый формат sub=user_id и старый sub=username.
+    user = None
+    try:
+        user_id = int(sub)
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+    except (TypeError, ValueError):
+        username = payload.get("username") or sub
+        result = await db.execute(select(User).where(User.username == username))
+        user = result.scalar_one_or_none()
+
     if user is None:
         raise credentials_exception
     return user
 
 
 @router.post("/login", response_model=Token)
-async def login(user_data: UserLogin, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User).where(User.username == user_data.username))
-    user = result.scalar_one_or_none()
-    
-    if not user or not verify_password(user_data.password, user.password_hash):
+async def login(
+    user_data: UserLogin,
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    try:
+        return await auth_service.login(username=user_data.username, password=user_data.password)
+    except ValueError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Неверный логин или пароль"
+            detail="Неверный логин или пароль",
         )
-    
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    role = getattr(user, "role", None) or ("teacher" if user.is_teacher else "student")
-    access_token = create_access_token(
-        data={"sub": user.username, "user_id": user.id, "is_teacher": user.is_teacher, "role": role},
-        expires_delta=access_token_expires
-    )
-    
-    return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/refresh", response_model=Token)
+async def refresh_session(
+    payload: RefreshRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    try:
+        return await auth_service.refresh(refresh_token=payload.refresh_token)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+        )
+
+
+@router.post("/logout", response_model=LogoutResponse)
+async def logout(
+    payload: RefreshRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    return await auth_service.logout(refresh_token=payload.refresh_token)
 
 
 @router.post("/register", response_model=UserResponse)

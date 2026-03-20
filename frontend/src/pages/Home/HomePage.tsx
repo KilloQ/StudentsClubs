@@ -50,14 +50,6 @@ export default function HomePage() {
         navigate(`/club/${clubId}`);
     };
 
-    const handleProfileShortcutClick = () => {
-        if (user?.role === "admin") {
-            navigate("/admin-profile");
-        } else {
-            navigate("/teacher-profile");
-        }
-    };
-
     return (
         <>
             <Navbar />

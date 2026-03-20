@@ -1,4 +1,4 @@
-import { getAuthHeaders } from "./auth";
+import { apiFetch } from "./httpClient";
 
 const API_BASE_URL = "http://localhost:8000";
 
@@ -11,33 +11,12 @@ export type UserAdmin = {
 };
 
 export const getUsers = async (): Promise<UserAdmin[]> => {
-    const response = await fetch(`${API_BASE_URL}/admin/users`, {
-        method: "GET",
-        headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-        if (response.status === 403) {
-            throw new Error("Недостаточно прав");
-        }
-        const err = await response.json();
-        throw new Error(err.detail || "Ошибка загрузки пользователей");
-    }
-
-    return response.json();
+    return apiFetch<UserAdmin[]>(`${API_BASE_URL}/admin/users`, { method: "GET" });
 };
 
 export const updateUserRole = async (userId: number, role: string): Promise<UserAdmin> => {
-    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/role`, {
+    return apiFetch<UserAdmin>(`${API_BASE_URL}/admin/users/${userId}/role`, {
         method: "PUT",
-        headers: getAuthHeaders(),
         body: JSON.stringify({ role }),
     });
-
-    if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.detail || "Ошибка изменения роли");
-    }
-
-    return response.json();
 };

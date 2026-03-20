@@ -1,4 +1,4 @@
-import { getAuthHeaders } from "./auth";
+import { apiFetch } from "./httpClient";
 
 const API_BASE_URL = "http://localhost:8000";
 
@@ -39,81 +39,30 @@ export const getClubs = async (category?: string): Promise<Club[]> => {
     const url = category && category !== "Все"
         ? `${API_BASE_URL}/clubs/?category=${encodeURIComponent(category)}`
         : `${API_BASE_URL}/clubs/`;
-    
-    const response = await fetch(url, {
-        method: "GET",
-        headers: getAuthHeaders(),
-    });
 
-    if (!response.ok) {
-        throw new Error("Failed to fetch clubs");
-    }
-
-    return response.json();
+    return apiFetch<Club[]>(url, { method: "GET" });
 };
 
 export const getClub = async (clubId: number): Promise<ClubDetail> => {
-    const response = await fetch(`${API_BASE_URL}/clubs/${clubId}`, {
-        method: "GET",
-        headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-        throw new Error("Failed to fetch club");
-    }
-
-    return response.json();
+    return apiFetch<ClubDetail>(`${API_BASE_URL}/clubs/${clubId}`, { method: "GET" });
 };
 
 export const createClub = async (data: CreateClubRequest): Promise<Club> => {
-    const response = await fetch(`${API_BASE_URL}/clubs/`, {
+    return apiFetch<Club>(`${API_BASE_URL}/clubs/`, {
         method: "POST",
-        headers: getAuthHeaders(),
         body: JSON.stringify(data),
     });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to create club");
-    }
-
-    return response.json();
 };
 
 export const joinClub = async (clubId: number): Promise<void> => {
-    const response = await fetch(`${API_BASE_URL}/clubs/${clubId}/join`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Ошибка записи на кружок");
-    }
+    await apiFetch(`${API_BASE_URL}/clubs/${clubId}/join`, { method: "POST" });
 };
 
 export const leaveClub = async (clubId: number): Promise<void> => {
-    const response = await fetch(`${API_BASE_URL}/clubs/${clubId}/leave`, {
-        method: "DELETE",
-        headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Ошибка отписки от кружка");
-    }
+    await apiFetch(`${API_BASE_URL}/clubs/${clubId}/leave`, { method: "DELETE" });
 };
 
 export const getCategories = async (): Promise<string[]> => {
-    const response = await fetch(`${API_BASE_URL}/clubs/categories/list`, {
-        method: "GET",
-        headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-        throw new Error("Failed to fetch categories");
-    }
-
-    return response.json();
+    return apiFetch<string[]>(`${API_BASE_URL}/clubs/categories/list`, { method: "GET" });
 };
 

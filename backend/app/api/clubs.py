@@ -87,7 +87,6 @@ async def get_club(
         )
         is_member = membership_check.scalar_one_or_none() is not None
     
-    # Преобразуем расписание в нужный формат
     schedules_list = [
         {
             "id": s.id,
@@ -137,7 +136,6 @@ async def create_club(
     await db.commit()
     await db.refresh(new_club, ["schedules"])
     
-    # Преобразуем в словарь для сериализации
     club_dict = {
         "id": new_club.id,
         "title": new_club.title,

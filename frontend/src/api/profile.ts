@@ -1,4 +1,4 @@
-import { getAuthHeaders } from "./auth";
+import { apiFetch } from "./httpClient";
 
 const API_BASE_URL = "http://localhost:8000";
 
@@ -54,28 +54,10 @@ export interface TeacherProfile {
 }
 
 export const getStudentProfile = async (): Promise<StudentProfile> => {
-    const response = await fetch(`${API_BASE_URL}/profile/student`, {
-        method: "GET",
-        headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-        throw new Error("Failed to fetch student profile");
-    }
-
-    return response.json();
+    return apiFetch<StudentProfile>(`${API_BASE_URL}/profile/student`, { method: "GET" });
 };
 
 export const getTeacherProfile = async (): Promise<TeacherProfile> => {
-    const response = await fetch(`${API_BASE_URL}/profile/teacher`, {
-        method: "GET",
-        headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-        throw new Error("Failed to fetch teacher profile");
-    }
-
-    return response.json();
+    return apiFetch<TeacherProfile>(`${API_BASE_URL}/profile/teacher`, { method: "GET" });
 };
 

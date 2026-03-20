@@ -1,7 +1,16 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import type { UserResponse } from "../api/auth";
-import { login as apiLogin, register as apiRegister, getCurrentUser, saveToken, removeToken, getToken } from "../api/auth";
+import {
+    getCurrentUser,
+    getToken,
+    getRefreshToken,
+    login as apiLogin,
+    register as apiRegister,
+    logout as apiLogout,
+    removeToken,
+    saveTokens,
+} from "../api/auth";
 
 interface AuthContextType {
     user: UserResponse | null;
@@ -21,8 +30,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
         console.log("🔐 AuthProvider: Инициализация...");
         // Проверяем, есть ли сохраненный токен
-        const token = getToken();
-        if (token) {
+        const accessToken = getToken();
+        const refreshToken = getRefreshToken();
+
+        if (accessToken || refreshToken) {
             console.log("🔑 Токен найден, загружаем пользователя...");
             // Пытаемся получить информацию о пользователе
             getCurrentUser()
@@ -46,9 +57,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     }, []);
 
+    useEffect(() => {
+        const onLogout = () => {
+            setUser(null);
+            setLoading(false);
+        };
+        window.addEventListener("auth:logout", onLogout);
+        return () => window.removeEventListener("auth:logout", onLogout);
+    }, []);
+
     const login = async (username: string, password: string) => {
         const tokenResponse = await apiLogin({ username, password });
-        saveToken(tokenResponse.access_token);
+        saveTokens(tokenResponse.access_token, tokenResponse.refresh_token);
         const userData = await getCurrentUser();
         setUser(userData);
     };
@@ -59,9 +79,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await login(username, password);
     };
 
-    const logout = () => {
-        removeToken();
-        setUser(null);
+    const logout = async () => {
+        try {
+            await apiLogout();
+        } finally {
+            setUser(null);
+        }
     };
 
     return (

@@ -1,4 +1,4 @@
-import { getAuthHeaders } from "./auth";
+import { apiFetch } from "./httpClient";
 
 const API_BASE_URL = "http://localhost:8000";
 
@@ -42,92 +42,39 @@ export interface ScheduleItemCreate {
 }
 
 export const getClubStudents = async (clubId: number): Promise<StudentAttendanceInfo[]> => {
-    const response = await fetch(`${API_BASE_URL}/management/${clubId}/students`, {
-        method: "GET",
-        headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-        throw new Error("Failed to fetch club students");
-    }
-
-    return response.json();
+    return apiFetch<StudentAttendanceInfo[]>(`${API_BASE_URL}/management/${clubId}/students`, { method: "GET" });
 };
 
 export const markAttendance = async (clubId: number, data: MarkAttendanceRequest): Promise<void> => {
-    const response = await fetch(`${API_BASE_URL}/management/${clubId}/attendance`, {
+    await apiFetch(`${API_BASE_URL}/management/${clubId}/attendance`, {
         method: "POST",
-        headers: getAuthHeaders(),
         body: JSON.stringify(data),
     });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to mark attendance");
-    }
 };
 
 export const getClubSettings = async (clubId: number): Promise<ClubSettings> => {
-    const response = await fetch(`${API_BASE_URL}/management/${clubId}/settings`, {
-        method: "GET",
-        headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-        throw new Error("Failed to fetch club settings");
-    }
-
-    return response.json();
+    return apiFetch<ClubSettings>(`${API_BASE_URL}/management/${clubId}/settings`, { method: "GET" });
 };
 
 export const updateClubSettings = async (clubId: number, settings: ClubSettingsUpdate): Promise<void> => {
-    const response = await fetch(`${API_BASE_URL}/management/${clubId}/settings`, {
+    await apiFetch(`${API_BASE_URL}/management/${clubId}/settings`, {
         method: "PUT",
-        headers: getAuthHeaders(),
         body: JSON.stringify(settings),
     });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to update settings");
-    }
 };
 
 export const addScheduleItem = async (clubId: number, schedule: ScheduleItemCreate): Promise<void> => {
-    const response = await fetch(`${API_BASE_URL}/management/${clubId}/schedule`, {
+    await apiFetch(`${API_BASE_URL}/management/${clubId}/schedule`, {
         method: "POST",
-        headers: getAuthHeaders(),
         body: JSON.stringify(schedule),
     });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to add schedule item");
-    }
 };
 
 export const deleteScheduleItem = async (clubId: number, scheduleId: number): Promise<void> => {
-    const response = await fetch(`${API_BASE_URL}/management/${clubId}/schedule/${scheduleId}`, {
-        method: "DELETE",
-        headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Failed to delete schedule item");
-    }
+    await apiFetch(`${API_BASE_URL}/management/${clubId}/schedule/${scheduleId}`, { method: "DELETE" });
 };
 
 export const getClubStats = async (clubId: number): Promise<{ total_students: number }> => {
-    const response = await fetch(`${API_BASE_URL}/management/${clubId}/stats`, {
-        method: "GET",
-        headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-        throw new Error("Failed to fetch club stats");
-    }
-
-    return response.json();
+    return apiFetch<{ total_students: number }>(`${API_BASE_URL}/management/${clubId}/stats`, { method: "GET" });
 };
 
