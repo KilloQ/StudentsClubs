@@ -38,6 +38,7 @@ class Club(Base):
     owner = relationship("User", back_populates="owned_clubs", foreign_keys=[owner_id])
     memberships = relationship("ClubMembership", back_populates="club", cascade="all, delete-orphan")
     schedules = relationship("Schedule", back_populates="club", cascade="all, delete-orphan")
+    files = relationship("ClubFile", back_populates="club", cascade="all, delete-orphan")
     attendances = relationship("Attendance", back_populates="club")
 
 
@@ -95,4 +96,19 @@ class RefreshToken(Base):
     revoked_at = Column(DateTime, nullable=True, index=True)
     revoked_reason = Column(String(50), nullable=True)
     last_used_at = Column(DateTime, nullable=True)
+
+
+class ClubFile(Base):
+    __tablename__ = "club_files"
+
+    id = Column(Integer, primary_key=True, index=True)
+    club_id = Column(Integer, ForeignKey("clubs.id", ondelete="CASCADE"), nullable=False, index=True)
+    uploaded_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    original_name = Column(String(255), nullable=False)
+    object_key = Column(String(512), nullable=False, unique=True)
+    content_type = Column(String(100), nullable=False)
+    size_bytes = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    club = relationship("Club", back_populates="files")
 

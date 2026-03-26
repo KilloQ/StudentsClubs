@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ChangeEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar";
-import { getClub, joinClub, leaveClub } from "../../api/clubs";
-import type { ClubDetail } from "../../api/clubs";
+import { deleteClubFile, getClub, getClubFileDownloadUrl, getClubFiles, joinClub, leaveClub, uploadClubFile } from "../../api/clubs";
+import type { ClubDetail, ClubFile } from "../../api/clubs";
 import { useAuth } from "../../contexts/AuthContext";
-import { canJoinOrLeaveClub } from "../../utils/permissions";
+import { canJoinOrLeaveClub, canManageClubs } from "../../utils/permissions";
 import "./ClubPage.css";
 
 export default function ClubPage() {
@@ -16,6 +16,8 @@ export default function ClubPage() {
     const [error, setError] = useState("");
     const [joining, setJoining] = useState(false);
     const [leaving, setLeaving] = useState(false);
+    const [files, setFiles] = useState<ClubFile[]>([]);
+    const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
         if (clubId) {
@@ -27,6 +29,8 @@ export default function ClubPage() {
         try {
             const data = await getClub(Number(clubId));
             setClubData(data);
+            const fileList = await getClubFiles(Number(clubId));
+            setFiles(fileList);
         } catch (err: any) {
             setError(err.message || "Ошибка загрузки кружка");
         } finally {
@@ -65,6 +69,59 @@ export default function ClubPage() {
             setError(err.message || "Ошибка отписки от кружка");
         } finally {
             setLeaving(false);
+        }
+    };
+
+    const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+        if (!clubId || !event.target.files?.length) return;
+
+        const file = event.target.files[0];
+        const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
+        const maxSizeBytes = 5 * 1024 * 1024;
+
+        if (!allowedTypes.includes(file.type)) {
+            setError("Разрешены только JPG, PNG и PDF");
+            event.target.value = "";
+            return;
+        }
+        if (file.size > maxSizeBytes) {
+            setError("Файл слишком большой (максимум 5 МБ)");
+            event.target.value = "";
+            return;
+        }
+
+        setUploading(true);
+        setError("");
+        try {
+            await uploadClubFile(Number(clubId), file);
+            const fileList = await getClubFiles(Number(clubId));
+            setFiles(fileList);
+        } catch (err: any) {
+            setError(err.message || "Ошибка загрузки файла");
+        } finally {
+            setUploading(false);
+            event.target.value = "";
+        }
+    };
+
+    const handleDownloadFile = async (fileId: number) => {
+        if (!clubId) return;
+        try {
+            const url = await getClubFileDownloadUrl(Number(clubId), fileId);
+            window.open(url, "_blank", "noopener,noreferrer");
+        } catch (err: any) {
+            setError(err.message || "Ошибка получения ссылки на файл");
+        }
+    };
+
+    const handleDeleteFile = async (fileId: number) => {
+        if (!clubId) return;
+        try {
+            await deleteClubFile(Number(clubId), fileId);
+            const fileList = await getClubFiles(Number(clubId));
+            setFiles(fileList);
+        } catch (err: any) {
+            setError(err.message || "Ошибка удаления файла");
         }
     };
 
@@ -155,6 +212,38 @@ export default function ClubPage() {
                                     ))
                                 ) : (
                                     <div>Расписание не установлено</div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="club-section">
+                            <h3 className="section-title">Файлы кружка</h3>
+                            {canManageClubs(user) && (
+                                <div className="file-upload-row">
+                                    <input type="file" onChange={handleFileUpload} disabled={uploading} />
+                                    {uploading && <span className="uploading-label">Загрузка...</span>}
+                                </div>
+                            )}
+                            <div className="files-list">
+                                {files.length === 0 ? (
+                                    <div className="file-empty">Файлы пока не добавлены</div>
+                                ) : (
+                                    files.map((file) => (
+                                        <div key={file.id} className="file-item">
+                                            <div>
+                                                <div className="file-name">{file.original_name}</div>
+                                                <div className="file-meta">{Math.round(file.size_bytes / 1024)} KB</div>
+                                            </div>
+                                            <div className="file-actions">
+                                                <button className="file-btn" onClick={() => handleDownloadFile(file.id)}>Открыть</button>
+                                                {canManageClubs(user) && (
+                                                    <button className="file-btn danger" onClick={() => handleDeleteFile(file.id)}>
+                                                        Удалить
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))
                                 )}
                             </div>
                         </div>

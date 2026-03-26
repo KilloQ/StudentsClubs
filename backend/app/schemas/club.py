@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional, List
+from pydantic import BaseModel, Field
+from typing import Optional, List, Literal
 from datetime import time, date
 
 
@@ -33,9 +33,11 @@ class ClubCreate(ClubBase):
 
 
 class ClubUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    max_students: Optional[int] = None
+    title: Optional[str] = Field(default=None, min_length=2, max_length=120)
+    description: Optional[str] = Field(default=None, max_length=5000)
+    category: Optional[str] = Field(default=None, min_length=2, max_length=80)
+    image_url: Optional[str] = Field(default=None, max_length=1000)
+    max_students: Optional[int] = Field(default=None, ge=1, le=10000)
     recruitment_open: Optional[bool] = None
 
 
@@ -64,4 +66,36 @@ class ClubMembershipResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ClubListResponse(BaseModel):
+    items: List[ClubResponse]
+    total: int
+    page: int
+    page_size: int
+
+
+class ClubSortField(str):
+    TITLE = "title"
+    CATEGORY = "category"
+    MAX_STUDENTS = "max_students"
+    CREATED = "id"
+
+
+class ClubFileResponse(BaseModel):
+    id: int
+    club_id: int
+    original_name: str
+    content_type: str
+    size_bytes: int
+    created_at: str
+    uploaded_by: int
+
+
+class ClubFileUploadResponse(ClubFileResponse):
+    download_url: str
+
+
+class ClubFileDownloadResponse(BaseModel):
+    download_url: str
 

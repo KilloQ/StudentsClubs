@@ -67,7 +67,7 @@ export async function apiFetch<T = unknown>(url: string, options: ApiFetchOption
         options.body !== null &&
         options.body !== "" &&
         typeof options.body !== "undefined";
-    if (hasBody && !headers.has("Content-Type")) {
+    if (hasBody && !(options.body instanceof FormData) && !headers.has("Content-Type")) {
         headers.set("Content-Type", "application/json");
     }
 
@@ -114,7 +114,6 @@ export async function apiFetch<T = unknown>(url: string, options: ApiFetchOption
     }
 
     const text = await response.text();
-    // @ts-expect-error - если ответ не json, тип T может быть не подходящим
     return text as T;
 }
 
