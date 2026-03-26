@@ -2,7 +2,6 @@ from datetime import date
 from typing import List, Optional, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
-from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
@@ -25,7 +24,14 @@ from app.core.config import settings
 from app.services.storage_service import StorageService
 
 router = APIRouter()
-storage = StorageService()
+_storage: Optional[StorageService] = None
+
+
+def get_storage() -> StorageService:
+    global _storage
+    if _storage is None:
+        _storage = StorageService()
+    return _storage
 
 
 def _club_to_response(club: Club) -> dict:
@@ -365,6 +371,7 @@ async def upload_club_file(
     if len(payload) > settings.FILE_MAX_SIZE_BYTES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Файл превышает допустимый размер")
 
+    storage = get_storage()
     object_key = storage.build_object_key(club_id, file.filename or "file")
     storage.upload_file(
         object_key=object_key,
@@ -393,7 +400,7 @@ async def upload_club_file(
         "size_bytes": club_file.size_bytes,
         "created_at": club_file.created_at.isoformat(),
         "uploaded_by": club_file.uploaded_by,
-        "download_url": storage.generate_presigned_download_url(club_file.object_key),
+        "download_url": get_storage().generate_presigned_download_url(club_file.object_key),
     }
 
 
@@ -411,7 +418,7 @@ async def get_file_download_url(
     if not club_file:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Файл не найден")
 
-    return {"download_url": storage.generate_presigned_download_url(club_file.object_key)}
+    return {"download_url": get_storage().generate_presigned_download_url(club_file.object_key)}
 
 
 @router.delete("/{club_id}/files/{file_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -436,37 +443,10 @@ async def delete_file(
     if current_user.role != "admin" and club.owner_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Недостаточно прав")
 
-    storage.delete_file(club_file.object_key)
+    get_storage().delete_file(club_file.object_key)
     await db.delete(club_file)
     await db.commit()
     return None
-
-
-@router.get("/files/content")
-async def get_file_content(
-    key: str,
-    exp: int,
-    sig: str,
-    db: AsyncSession = Depends(get_db),
-):
-    if not storage.verify_signature(key, exp, sig):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Ссылка недействительна")
-
-    file_result = await db.execute(select(ClubFile).where(ClubFile.object_key == key))
-    club_file = file_result.scalar_one_or_none()
-    if not club_file:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Файл не найден")
-
-    try:
-        content = storage.read_file(key)
-    except FileNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Файл не найден")
-
-    return Response(
-        content=content,
-        media_type=club_file.content_type,
-        headers={"Content-Disposition": f"inline; filename=\"{club_file.original_name}\""},
-    )
 
 
 @router.get("/categories/list", response_model=List[str])
