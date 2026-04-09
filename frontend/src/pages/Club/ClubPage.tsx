@@ -1,10 +1,12 @@
-import { useState, useEffect, type ChangeEvent } from "react";
+import { useState, useEffect, useCallback, type ChangeEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar";
 import { deleteClubFile, getClub, getClubFileDownloadUrl, getClubFiles, joinClub, leaveClub, uploadClubFile } from "../../api/clubs";
 import type { ClubDetail, ClubFile } from "../../api/clubs";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/useAuth";
 import { canJoinOrLeaveClub, canManageClubs } from "../../utils/permissions";
+import { Seo } from "../../seo/seo";
+import { getErrorMessage } from "../../utils/errors";
 import "./ClubPage.css";
 
 export default function ClubPage() {
@@ -19,27 +21,34 @@ export default function ClubPage() {
     const [files, setFiles] = useState<ClubFile[]>([]);
     const [uploading, setUploading] = useState(false);
 
+    const loadClub = useCallback(async () => {
+        try {
+            const data = await getClub(Number(clubId));
+            setClubData(data);
+            // Files are private (require auth). Don't block public page render.
+            if (user) {
+                const fileList = await getClubFiles(Number(clubId));
+                setFiles(fileList);
+            } else {
+                setFiles([]);
+            }
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка загрузки кружка"));
+        } finally {
+            setLoading(false);
+        }
+    }, [clubId, user]);
+
     useEffect(() => {
         if (clubId) {
             loadClub();
         }
-    }, [clubId]);
+    }, [clubId, loadClub]);
 
-    const loadClub = async () => {
-        try {
-            const data = await getClub(Number(clubId));
-            setClubData(data);
-            const fileList = await getClubFiles(Number(clubId));
-            setFiles(fileList);
-        } catch (err: any) {
-            setError(err.message || "Ошибка загрузки кружка");
-        } finally {
-            setLoading(false);
-        }
-    };
+    // External data moved to the main page (/clubs)
 
     const handleBackClick = () => {
-        navigate("/home");
+        navigate("/clubs");
     };
 
     const handleJoinClick = async () => {
@@ -50,8 +59,8 @@ export default function ClubPage() {
             await joinClub(Number(clubId));
             // Обновляем данные кружка
             await loadClub();
-        } catch (err: any) {
-            setError(err.message || "Ошибка записи на кружок");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка записи на кружок"));
         } finally {
             setJoining(false);
         }
@@ -65,8 +74,8 @@ export default function ClubPage() {
             await leaveClub(Number(clubId));
             // Обновляем данные кружка
             await loadClub();
-        } catch (err: any) {
-            setError(err.message || "Ошибка отписки от кружка");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка отписки от кружка"));
         } finally {
             setLeaving(false);
         }
@@ -96,8 +105,8 @@ export default function ClubPage() {
             await uploadClubFile(Number(clubId), file);
             const fileList = await getClubFiles(Number(clubId));
             setFiles(fileList);
-        } catch (err: any) {
-            setError(err.message || "Ошибка загрузки файла");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка загрузки файла"));
         } finally {
             setUploading(false);
             event.target.value = "";
@@ -109,8 +118,8 @@ export default function ClubPage() {
         try {
             const url = await getClubFileDownloadUrl(Number(clubId), fileId);
             window.open(url, "_blank", "noopener,noreferrer");
-        } catch (err: any) {
-            setError(err.message || "Ошибка получения ссылки на файл");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка получения ссылки на файл"));
         }
     };
 
@@ -120,8 +129,8 @@ export default function ClubPage() {
             await deleteClubFile(Number(clubId), fileId);
             const fileList = await getClubFiles(Number(clubId));
             setFiles(fileList);
-        } catch (err: any) {
-            setError(err.message || "Ошибка удаления файла");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка удаления файла"));
         }
     };
 
@@ -149,9 +158,34 @@ export default function ClubPage() {
 
     const participants = `${clubData.current_students}/${clubData.max_students}`;
     const recruitmentStatus = clubData.recruitment_open ? "открыт" : "закрыт";
+    const siteUrl = import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin;
+    const canonicalUrl = `${siteUrl}/clubs/${clubData.id}`;
+    const description = (clubData.description || "").trim() || `Кружок “${clubData.title}” — ${clubData.category}.`;
+
+    const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        name: clubData.title,
+        description: description,
+        category: clubData.category,
+        url: canonicalUrl,
+    };
 
     return (
         <div className="club-page-container">
+            <Seo
+                title={`${clubData.title} — кружок МТУСИ`}
+                description={description.slice(0, 180)}
+                canonicalUrl={canonicalUrl}
+                openGraph={{
+                    title: `${clubData.title} — кружок МТУСИ`,
+                    description: description.slice(0, 180),
+                    url: canonicalUrl,
+                    image: clubData.image_url,
+                    type: "article",
+                }}
+                jsonLd={jsonLd}
+            />
             <Navbar />
 
             <div className="club-page-back">
@@ -218,6 +252,9 @@ export default function ClubPage() {
 
                         <div className="club-section">
                             <h3 className="section-title">Файлы кружка</h3>
+                            {!user ? (
+                                <div className="file-empty">Войдите, чтобы увидеть файлы кружка</div>
+                            ) : null}
                             {canManageClubs(user) && (
                                 <div className="file-upload-row">
                                     <input type="file" onChange={handleFileUpload} disabled={uploading} />

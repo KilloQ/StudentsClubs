@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/useAuth";
 import { getUsers, updateUserRole, type UserAdmin } from "../../api/admin";
+import { getErrorMessage } from "../../utils/errors";
 import "./AdminProfilePage.css";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -27,15 +28,15 @@ export default function AdminProfilePage() {
             setError("");
             const data = await getUsers();
             setUsers(data);
-        } catch (err: any) {
-            setError(err.message || "Ошибка загрузки пользователей");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка загрузки пользователей"));
         } finally {
             setLoading(false);
         }
     };
 
     const handleBackClick = () => {
-        navigate("/home");
+        navigate("/clubs");
     };
 
     const handleRoleChange = async (userId: number, newRole: string) => {
@@ -44,8 +45,8 @@ export default function AdminProfilePage() {
             setError("");
             await updateUserRole(userId, newRole);
             await loadUsers();
-        } catch (err: any) {
-            setError(err.message || "Ошибка изменения роли");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка изменения роли"));
         } finally {
             setChangingId(null);
         }

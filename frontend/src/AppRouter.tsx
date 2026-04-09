@@ -1,37 +1,41 @@
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import TestPage from "./pages/TestPage";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { Suspense, lazy } from "react";
 import LoginPage from "./pages/Auth/LoginPage";
 import RegisterPage from "./pages/Auth/RegisterPage";
 import HomePage from "./pages/Home/HomePage";
-import StudentProfilePage from "./pages/Profile/StudentProfilePage";
-import TeacherProfilePage from "./pages/Profile/TeacherProfilePage";
-import AdminProfilePage from "./pages/Profile/AdminProfilePage";
 import ClubPage from "./pages/Club/ClubPage";
-import ClubManagementPage from "./pages/Management/ClubManagementPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./NotFound.css";
 
+const StudentProfilePage = lazy(() => import("./pages/Profile/StudentProfilePage"));
+const TeacherProfilePage = lazy(() => import("./pages/Profile/TeacherProfilePage"));
+const AdminProfilePage = lazy(() => import("./pages/Profile/AdminProfilePage"));
+const ClubManagementPage = lazy(() => import("./pages/Management/ClubManagementPage"));
+
 export default function AppRouter() {
-    const location = useLocation();
-    console.log("AppRouter: Текущий путь:", location.pathname);
-    
     return (
-        <Routes>
-            <Route path="/test" element={<TestPage />} />
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute requireStudent><StudentProfilePage /></ProtectedRoute>} />
-            <Route path="/teacher-profile" element={<ProtectedRoute requireTeacher><TeacherProfilePage /></ProtectedRoute>} />
-            <Route path="/admin-profile" element={<ProtectedRoute requireAdmin><AdminProfilePage /></ProtectedRoute>} />
-            <Route path="/club/:clubId" element={<ProtectedRoute><ClubPage /></ProtectedRoute>} />
-            <Route path="/manage-club/:clubId" element={<ProtectedRoute requireTeacher><ClubManagementPage /></ProtectedRoute>} />
-            <Route path="*" element={
-                <div className="not-found-container">
-                    404 — страница не найдена
-                </div>
-            } />
-        </Routes>
+        <Suspense fallback={<div className="loading-message">Загрузка...</div>}>
+            <Routes>
+                <Route path="/" element={<Navigate to="/clubs" replace />} />
+
+                {/* Публичные (индексируемые) */}
+                <Route path="/clubs" element={<HomePage />} />
+                <Route path="/clubs/:clubId" element={<ClubPage />} />
+
+                {/* Служебные / закрытые */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/account/profile" element={<ProtectedRoute requireStudent><StudentProfilePage /></ProtectedRoute>} />
+                <Route path="/account/teacher" element={<ProtectedRoute requireTeacher><TeacherProfilePage /></ProtectedRoute>} />
+                <Route path="/account/admin" element={<ProtectedRoute requireAdmin><AdminProfilePage /></ProtectedRoute>} />
+                <Route path="/clubs/:clubId/manage" element={<ProtectedRoute requireTeacher><ClubManagementPage /></ProtectedRoute>} />
+
+                <Route path="*" element={
+                    <div className="not-found-container">
+                        404 — страница не найдена
+                    </div>
+                } />
+            </Routes>
+        </Suspense>
     );
 }

@@ -1,9 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar";
 import ClubCard from "../../components/ClubCard/ClubCard";
 import { getClubs, getCategories } from "../../api/clubs";
 import type { Club, ClubFilters } from "../../api/clubs";
+import { getWeather, type Weather } from "../../api/external";
+import { Seo } from "../../seo/seo";
+import { getErrorMessage } from "../../utils/errors";
 import "./HomePage.css";
 
 export default function HomePage() {
@@ -21,6 +24,9 @@ export default function HomePage() {
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [weather, setWeather] = useState<Weather | null>(null);
+    const [weatherLoading, setWeatherLoading] = useState(false);
+    const [weatherError, setWeatherError] = useState("");
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -41,40 +47,18 @@ export default function HomePage() {
         if (qSortOrder === "asc" || qSortOrder === "desc") setSortOrder(qSortOrder);
         if (qPage) setPage(Number(qPage));
         if (qPageSize) setPageSize(Number(qPageSize));
-    }, []);
+    }, [searchParams]);
 
-    useEffect(() => {
-        loadData();
-    }, []);
-
-    useEffect(() => {
-        loadClubs();
-    }, [activeCategory, search, recruitmentOpenOnly, minMaxStudents, sortBy, sortOrder, page, pageSize]);
-
-    useEffect(() => {
-        const params: Record<string, string> = {
-            category: activeCategory,
-            sort_by: sortBy,
-            sort_order: sortOrder,
-            page: String(page),
-            page_size: String(pageSize),
-        };
-        if (search.trim()) params.search = search.trim();
-        if (recruitmentOpenOnly) params.recruitment_open = "true";
-        if (minMaxStudents) params.min_max_students = minMaxStudents;
-        setSearchParams(params, { replace: true });
-    }, [activeCategory, search, recruitmentOpenOnly, minMaxStudents, sortBy, sortOrder, page, pageSize, setSearchParams]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         try {
             const cats = await getCategories();
             setCategories(cats);
-        } catch (err: any) {
-            setError(err.message || "Ошибка загрузки категорий");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка загрузки категорий"));
         }
-    };
+    }, []);
 
-    const loadClubs = async () => {
+    const loadClubs = useCallback(async () => {
         setLoading(true);
         try {
             const filters: ClubFilters = {
@@ -90,23 +74,97 @@ export default function HomePage() {
             const response = await getClubs(filters);
             setClubs(response.items);
             setTotal(response.total);
-        } catch (err: any) {
-            setError(err.message || "Ошибка загрузки кружков");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка загрузки кружков"));
         } finally {
             setLoading(false);
         }
-    };
+    }, [activeCategory, search, recruitmentOpenOnly, minMaxStudents, sortBy, sortOrder, page, pageSize]);
+
+    const didInit = useRef(false);
+    useEffect(() => {
+        if (didInit.current) return;
+        didInit.current = true;
+        loadData();
+    }, [loadData]);
+
+    useEffect(() => {
+        // External data shown on main page: weather for Moscow.
+        const city = "Москва";
+        setWeatherLoading(true);
+        setWeatherError("");
+        getWeather(city)
+            .then(setWeather)
+            .catch((e: unknown) => setWeatherError(getErrorMessage(e, "Погода недоступна")))
+            .finally(() => setWeatherLoading(false));
+    }, []);
+
+    useEffect(() => {
+        loadClubs();
+    }, [loadClubs]);
+
+    useEffect(() => {
+        const params: Record<string, string> = {
+            category: activeCategory,
+            sort_by: sortBy,
+            sort_order: sortOrder,
+            page: String(page),
+            page_size: String(pageSize),
+        };
+        if (search.trim()) params.search = search.trim();
+        if (recruitmentOpenOnly) params.recruitment_open = "true";
+        if (minMaxStudents) params.min_max_students = minMaxStudents;
+        setSearchParams(params, { replace: true });
+    }, [activeCategory, search, recruitmentOpenOnly, minMaxStudents, sortBy, sortOrder, page, pageSize, setSearchParams]);
+
+
 
     const handleClubClick = (clubId: number) => {
-        navigate(`/club/${clubId}`);
+        navigate(`/clubs/${clubId}`);
     };
+
+    const siteUrl = import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin;
+    const canonicalUrl = `${siteUrl}/clubs`;
 
     return (
         <>
+            <Seo
+                title="Кружки МТУСИ — каталог студенческих кружков"
+                description="Каталог студенческих кружков: направления, расписание и набор. Найдите кружок по интересам."
+                canonicalUrl={canonicalUrl}
+                openGraph={{
+                    title: "Кружки МТУСИ",
+                    description: "Каталог студенческих кружков: направления, расписание и набор.",
+                    url: canonicalUrl,
+                    type: "website",
+                }}
+            />
             <Navbar />
 
             <div className="home-container">
+                <h1>Каталог кружков</h1>
                 <h2>Направление кружка:</h2>
+
+                <section aria-label="Погода" style={{ marginBottom: 16 }}>
+                    <h3>Погода в Москве</h3>
+                    {weatherLoading ? (
+                        <div className="loading-message">Загрузка погоды...</div>
+                    ) : weatherError ? (
+                        <div className="error-message">{weatherError}</div>
+                    ) : weather ? (
+                        <div>
+                            <div>{weather.condition || "—"}</div>
+                            <div>
+                                {typeof weather.temp_c === "number" ? `${Math.round(weather.temp_c)}°C` : "—"}
+                                {typeof weather.feels_like_c === "number"
+                                    ? ` (ощущается как ${Math.round(weather.feels_like_c)}°C)`
+                                    : ""}
+                            </div>
+                        </div>
+                    ) : (
+                        <div>Нет данных</div>
+                    )}
+                </section>
 
                 <div className="chips">
                     {categories.map((category, i) => (

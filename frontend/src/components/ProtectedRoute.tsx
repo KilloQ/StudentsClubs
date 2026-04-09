@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../contexts/useAuth";
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
@@ -20,15 +20,15 @@ export default function ProtectedRoute({ children, requireTeacher = false, requi
     }
 
     if (requireAdmin && user?.role !== "admin") {
-        return <Navigate to="/home" replace />;
+        return <Navigate to="/clubs" replace />;
     }
 
     if (requireStudent && (user?.is_teacher || user?.role === "admin" || user?.role === "teacher")) {
-        return <Navigate to="/home" replace />;
+        return <Navigate to="/clubs" replace />;
     }
 
     if (requireTeacher && !user?.is_teacher) {
-        return <Navigate to="/home" replace />;
+        return <Navigate to="/clubs" replace />;
     }
 
     return <>{children}</>;

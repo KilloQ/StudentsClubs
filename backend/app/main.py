@@ -7,6 +7,8 @@ from app.api.clubs import router as clubs_router
 from app.api.profile import router as profile_router
 from app.api.management import router as management_router
 from app.api.admin import router as admin_router
+from app.api.seo import router as seo_router
+from app.api.external import router as external_router
 
 app = FastAPI(title="Student Clubs Management API")
 
@@ -24,3 +26,5 @@ app.include_router(clubs_router, prefix="/clubs", tags=["Clubs"])
 app.include_router(profile_router, prefix="/profile", tags=["Profile"])
 app.include_router(management_router, prefix="/management", tags=["Management"])
 app.include_router(admin_router, prefix="/admin", tags=["Admin"])
+app.include_router(seo_router, tags=["SEO"])
+app.include_router(external_router, prefix="/external", tags=["External"])

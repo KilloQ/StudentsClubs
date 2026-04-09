@@ -5,6 +5,7 @@ import { getTeacherProfile } from "../../api/profile";
 import type { TeacherProfile } from "../../api/profile";
 import { createClub, getCategories } from "../../api/clubs";
 import type { CreateClubRequest } from "../../api/clubs";
+import { getErrorMessage } from "../../utils/errors";
 import "./TeacherProfilePage.css";
 
 export default function TeacherProfilePage() {
@@ -24,8 +25,8 @@ export default function TeacherProfilePage() {
         try {
             const data = await getTeacherProfile();
             setProfile(data);
-        } catch (err: any) {
-            setError(err.message || "Ошибка загрузки профиля");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка загрузки профиля"));
         } finally {
             setLoading(false);
         }
@@ -35,13 +36,13 @@ export default function TeacherProfilePage() {
         try {
             const cats = await getCategories();
             setCategories(cats.filter(c => c !== "Все"));
-        } catch (err) {
+        } catch (err: unknown) {
             console.error("Ошибка загрузки категорий:", err);
         }
     };
 
     const handleBackClick = () => {
-        navigate("/home");
+        navigate("/clubs");
     };
 
     const handleCreateClubClick = () => {
@@ -57,13 +58,13 @@ export default function TeacherProfilePage() {
             await createClub(clubData);
             setIsModalOpen(false);
             await loadProfile(); // Обновляем профиль
-        } catch (err: any) {
-            setError(err.message || "Ошибка создания кружка");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка создания кружка"));
         }
     };
 
     const handleManageClubClick = (clubId: number) => {
-        navigate(`/manage-club/${clubId}`);
+        navigate(`/clubs/${clubId}/manage`);
     };
 
     if (loading) {

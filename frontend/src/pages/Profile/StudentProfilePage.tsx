@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getStudentProfile } from "../../api/profile";
 import type { StudentProfile } from "../../api/profile";
+import { getErrorMessage } from "../../utils/errors";
 import "./StudentProfilePage.css";
 
 export default function StudentProfilePage() {
@@ -18,19 +19,19 @@ export default function StudentProfilePage() {
         try {
             const data = await getStudentProfile();
             setProfile(data);
-        } catch (err: any) {
-            setError(err.message || "Ошибка загрузки профиля");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка загрузки профиля"));
         } finally {
             setLoading(false);
         }
     };
 
     const handleBackClick = () => {
-        navigate("/home");
+        navigate("/clubs");
     };
 
     const handleExploreClubsClick = () => {
-        navigate("/home");
+        navigate("/clubs");
     };
 
     if (loading) {

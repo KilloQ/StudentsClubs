@@ -21,6 +21,7 @@ from app.services.auth_service import AuthService
 
 router = APIRouter()
 security = HTTPBearer()
+security_optional = HTTPBearer(auto_error=False)
 
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
@@ -94,6 +95,38 @@ async def get_current_user(
 
     if user is None:
         raise credentials_exception
+    return user
+
+
+async def get_current_user_optional(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_optional),
+    db: AsyncSession = Depends(get_db),
+) -> Optional[User]:
+    if not credentials:
+        return None
+
+    token = credentials.credentials
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        token_type = payload.get("type")
+        if token_type and token_type != "access":
+            return None
+        sub = payload.get("sub")
+        if sub is None:
+            return None
+    except JWTError:
+        return None
+
+    user: Optional[User] = None
+    try:
+        user_id = int(sub)
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+    except (TypeError, ValueError):
+        username = payload.get("username") or sub
+        result = await db.execute(select(User).where(User.username == username))
+        user = result.scalar_one_or_none()
+
     return user
 
 

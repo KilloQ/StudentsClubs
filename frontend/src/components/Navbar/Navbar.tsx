@@ -1,7 +1,7 @@
 import "./Navbar.css";
 import { useNavigate } from "react-router-dom";
 import { User, LogOut } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/useAuth";
 
 export default function Navbar() {
     const navigate = useNavigate();
@@ -14,11 +14,11 @@ export default function Navbar() {
 
     const handleProfileClick = () => {
         if (user?.role === "admin") {
-            navigate("/admin-profile");
+            navigate("/account/admin");
         } else if (user?.is_teacher) {
-            navigate("/teacher-profile");
+            navigate("/account/teacher");
         } else {
-            navigate("/profile");
+            navigate("/account/profile");
         }
     };
 

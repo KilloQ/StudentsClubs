@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
     getClubStudents,
@@ -16,6 +16,7 @@ import type {
     ClubSettingsUpdate,
     ScheduleItemCreate
 } from "../../api/management";
+import { getErrorMessage } from "../../utils/errors";
 import "./ClubManagementPage.css";
 
 export default function ClubManagementPage() {
@@ -44,13 +45,7 @@ export default function ClubManagementPage() {
     // Статистика
     const [totalStudents, setTotalStudents] = useState(0);
 
-    useEffect(() => {
-        if (clubId) {
-            loadData();
-        }
-    }, [clubId, activeTab]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true);
         try {
             if (activeTab === "students") {
@@ -62,15 +57,21 @@ export default function ClubManagementPage() {
             }
             const stats = await getClubStats(Number(clubId));
             setTotalStudents(stats.total_students);
-        } catch (err: any) {
-            setError(err.message || "Ошибка загрузки данных");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка загрузки данных"));
         } finally {
             setLoading(false);
         }
-    };
+    }, [activeTab, clubId]);
+
+    useEffect(() => {
+        if (clubId) {
+            loadData();
+        }
+    }, [clubId, loadData]);
 
     const handleBackClick = () => {
-        navigate("/teacher-profile");
+        navigate("/account/teacher");
     };
 
     const handleMarkAttendance = async () => {
@@ -93,8 +94,8 @@ export default function ClubManagementPage() {
             if (activeTab === "students") {
                 await loadData();
             }
-        } catch (err: any) {
-            setError(err.message || "Ошибка отметки посещения");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка отметки посещения"));
         } finally {
             setMarkingAttendance(false);
         }
@@ -114,8 +115,8 @@ export default function ClubManagementPage() {
             await updateClubSettings(Number(clubId), update);
             setError("");
             await loadData();
-        } catch (err: any) {
-            setError(err.message || "Ошибка сохранения");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка сохранения"));
         } finally {
             setSaving(false);
         }
@@ -137,8 +138,8 @@ export default function ClubManagementPage() {
             setNewSchedule({ day_of_week: "", start_time: "", location: "" });
             setError("");
             await loadData();
-        } catch (err: any) {
-            setError(err.message || "Ошибка добавления занятия");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка добавления занятия"));
         }
     };
 
@@ -146,8 +147,8 @@ export default function ClubManagementPage() {
         try {
             await deleteScheduleItem(Number(clubId), scheduleId);
             await loadData();
-        } catch (err: any) {
-            setError(err.message || "Ошибка удаления занятия");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка удаления занятия"));
         }
     };
 

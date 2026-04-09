@@ -11,7 +11,7 @@ export default function ClubCard({ title, category, imageUrl, onClick }: ClubCar
     return (
         <div className="club-card" onClick={onClick} style={{ cursor: onClick ? "pointer" : "default" }}>
             {imageUrl ? (
-                <img src={imageUrl} alt={title} className="club-image" />
+                <img src={imageUrl} alt={title} className="club-image" loading="lazy" decoding="async" />
             ) : (
                 <div className="club-gradient"></div>
             )}

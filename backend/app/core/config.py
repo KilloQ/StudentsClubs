@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     FILE_ALLOWED_CONTENT_TYPES: str = "image/jpeg,image/png,application/pdf"
     LOCAL_STORAGE_DIR: str = "./storage"
     PUBLIC_API_BASE_URL: str = "http://localhost:8000"
+    PUBLIC_SITE_URL: str = "http://localhost:5173"
+    EXTERNAL_WEATHER_API_KEY: str = ""
+    EXTERNAL_WEATHER_BASE_URL: str = "https://api.openweathermap.org/data/2.5"
 
     class Config:
         env_file = ".env"

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/useAuth";
+import { getErrorMessage } from "../../utils/errors";
 import "./Auth.css";
 
 export default function RegisterPage() {
@@ -17,7 +18,7 @@ export default function RegisterPage() {
     // Если уже авторизован, перенаправляем на главную
     useEffect(() => {
         if (!authLoading && isAuthenticated) {
-            navigate("/home", { replace: true });
+            navigate("/clubs", { replace: true });
         }
     }, [isAuthenticated, authLoading, navigate]);
 
@@ -46,9 +47,9 @@ export default function RegisterPage() {
 
         try {
             await register(username, fullName, password, passwordConfirm);
-            navigate("/home");
-        } catch (err: any) {
-            setError(err.message || "Ошибка регистрации");
+            navigate("/clubs");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка регистрации"));
         } finally {
             setLoading(false);
         }

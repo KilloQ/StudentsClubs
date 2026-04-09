@@ -25,11 +25,8 @@ class StorageService:
         try:
             self._client.head_bucket(Bucket=self.bucket)
         except ClientError:
-            # For S3-compatible storages (e.g. MinIO) this is typically allowed.
             self._client.create_bucket(Bucket=self.bucket)
         except Exception:
-            # If storage isn't reachable yet (dev/local), allow startup.
-            # Upload/delete will fail with an S3 error and we will see it in request logs.
             return
 
     def build_object_key(self, club_id: int, filename: str) -> str:

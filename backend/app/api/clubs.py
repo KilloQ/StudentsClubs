@@ -18,7 +18,7 @@ from app.schemas.club import (
     ClubFileUploadResponse,
     ClubFileDownloadResponse,
 )
-from app.api.auth import get_current_user
+from app.api.auth import get_current_user, get_current_user_optional
 from app.core.permissions import require_permission, Permission
 from app.core.config import settings
 from app.services.storage_service import StorageService
@@ -114,7 +114,7 @@ async def get_clubs(
 @router.get("/{club_id}", response_model=ClubDetailResponse)
 async def get_club(
     club_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(
@@ -137,7 +137,7 @@ async def get_club(
     owner = owner_result.scalar_one()
     
     is_member = False
-    if not current_user.is_teacher:
+    if current_user and not current_user.is_teacher:
         membership_check = await db.execute(
             select(ClubMembership).where(
                 and_(

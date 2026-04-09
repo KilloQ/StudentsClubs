@@ -1,31 +1,22 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/useAuth";
+import { getErrorMessage } from "../../utils/errors";
 import "./Auth.css";
 
 export default function LoginPage() {
-    console.log("🔐 LoginPage: Рендерится");
     const [activeTab, setActiveTab] = useState<"login" | "register">("login");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
-    
-    let authContext;
-    try {
-        authContext = useAuth();
-    } catch (error) {
-        console.error("❌ Ошибка в useAuth:", error);
-        return <div>Ошибка загрузки контекста аутентификации. Проверьте консоль.</div>;
-    }
-    
-    const { login, isAuthenticated, loading: authLoading } = authContext;
+    const { login, isAuthenticated, loading: authLoading } = useAuth();
 
     // Если уже авторизован, перенаправляем на главную
     useEffect(() => {
         if (!authLoading && isAuthenticated) {
-            navigate("/home", { replace: true });
+            navigate("/clubs", { replace: true });
         }
     }, [isAuthenticated, authLoading, navigate]);
 
@@ -48,9 +39,9 @@ export default function LoginPage() {
 
         try {
             await login(username, password);
-            navigate("/home");
-        } catch (err: any) {
-            setError(err.message || "Ошибка входа");
+            navigate("/clubs");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка входа"));
         } finally {
             setLoading(false);
         }
