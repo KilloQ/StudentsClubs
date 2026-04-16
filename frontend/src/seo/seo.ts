@@ -56,7 +56,6 @@ export function Seo({
     el.textContent = JSON.stringify(data);
   };
 
-  // Client-side SEO (SPA). Search engines will at least see correct head after hydration.
   if (typeof document !== "undefined") {
     document.title = title;
     if (description) upsertMeta('meta[name="description"]', { name: "description", content: description });

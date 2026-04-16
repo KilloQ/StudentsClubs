@@ -14,9 +14,7 @@ router = APIRouter()
 
 @router.get("/robots.txt", include_in_schema=False)
 async def robots_txt() -> Response:
-    # SEO policy:
-    # - Allow indexing of public catalog + club pages
-    # - Disallow service/private areas and API endpoints
+
     lines: List[str] = [
         "User-agent: *",
         "Allow: /",
@@ -27,7 +25,7 @@ async def robots_txt() -> Response:
         "Disallow: /profile",
         "Disallow: /management",
         "Disallow: /admin",
-        "Disallow: /clubs/",  # API endpoints; public pages live on frontend
+        "Disallow: /clubs/",
         "Disallow: /docs",
         "Disallow: /redoc",
         "Disallow: /openapi.json",

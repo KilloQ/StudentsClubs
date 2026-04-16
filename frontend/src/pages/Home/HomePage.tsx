@@ -89,7 +89,6 @@ export default function HomePage() {
     }, [loadData]);
 
     useEffect(() => {
-        // External data shown on main page: weather for Moscow.
         const city = "Москва";
         setWeatherLoading(true);
         setWeatherError("");

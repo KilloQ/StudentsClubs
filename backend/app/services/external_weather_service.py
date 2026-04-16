@@ -12,14 +12,6 @@ class ExternalWeatherServiceError(RuntimeError):
 
 
 class ExternalWeatherService:
-    """
-    OpenWeather adapter with:
-    - env-based API key
-    - timeout
-    - retries w/ backoff
-    - simple in-memory rate limiting
-    - response normalization
-    """
 
     def __init__(
         self,
@@ -65,7 +57,6 @@ class ExternalWeatherService:
                 async with httpx.AsyncClient(timeout=self.timeout_s) as client:
                     resp = await client.get(url, params=params)
                 if resp.status_code == 429:
-                    # rate limited by provider: backoff and retry
                     await asyncio.sleep(0.5 * (attempt + 1))
                     continue
                 if resp.status_code >= 500:

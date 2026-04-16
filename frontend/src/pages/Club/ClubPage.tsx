@@ -25,7 +25,6 @@ export default function ClubPage() {
         try {
             const data = await getClub(Number(clubId));
             setClubData(data);
-            // Files are private (require auth). Don't block public page render.
             if (user) {
                 const fileList = await getClubFiles(Number(clubId));
                 setFiles(fileList);
@@ -45,7 +44,6 @@ export default function ClubPage() {
         }
     }, [clubId, loadClub]);
 
-    // External data moved to the main page (/clubs)
 
     const handleBackClick = () => {
         navigate("/clubs");

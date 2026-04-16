@@ -18,11 +18,11 @@ export default function AppRouter() {
             <Routes>
                 <Route path="/" element={<Navigate to="/clubs" replace />} />
 
-                {/* Публичные (индексируемые) */}
+                {/* Публичные*/}
                 <Route path="/clubs" element={<HomePage />} />
                 <Route path="/clubs/:clubId" element={<ClubPage />} />
 
-                {/* Служебные / закрытые */}
+                {/* Служебные*/}
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/account/profile" element={<ProtectedRoute requireStudent><StudentProfilePage /></ProtectedRoute>} />

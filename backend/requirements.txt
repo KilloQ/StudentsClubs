@@ -3,6 +3,7 @@ uvicorn
 pydantic
 pydantic-settings
 sqlalchemy
+aiosqlite
 alembic
 psycopg2-binary
 asyncpg
@@ -11,3 +12,5 @@ passlib[bcrypt]
 python-multipart
 boto3
 httpx
+pytest
+pytest-asyncio
