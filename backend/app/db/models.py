@@ -1,6 +1,5 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date, Time, Text, DateTime
-from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date, Time, Text, DateTime, func
+from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
 
 Base = declarative_base()
@@ -90,7 +89,7 @@ class RefreshToken(Base):
 
     token_hash = Column(String(64), unique=True, nullable=False, index=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
     expires_at = Column(DateTime, nullable=False, index=True)
 
     revoked_at = Column(DateTime, nullable=True, index=True)
@@ -108,7 +107,7 @@ class ClubFile(Base):
     object_key = Column(String(512), nullable=False, unique=True)
     content_type = Column(String(100), nullable=False)
     size_bytes = Column(Integer, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
 
     club = relationship("Club", back_populates="files")
 

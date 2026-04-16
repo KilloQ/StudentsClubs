@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Literal
 from datetime import time, date
 
@@ -14,10 +14,9 @@ class ScheduleCreate(ScheduleBase):
 
 
 class ScheduleResponse(ScheduleBase):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
-
-    class Config:
-        from_attributes = True
 
 
 class ClubBase(BaseModel):
@@ -42,13 +41,12 @@ class ClubUpdate(BaseModel):
 
 
 class ClubResponse(ClubBase):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     recruitment_open: bool
     owner_id: int
     schedules: List[ScheduleResponse] = []
-
-    class Config:
-        from_attributes = True
 
 
 class ClubDetailResponse(ClubResponse):
@@ -58,14 +56,13 @@ class ClubDetailResponse(ClubResponse):
 
 
 class ClubMembershipResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     club_id: int
     student_id: int
     student_name: str
     joined_at: date
-
-    class Config:
-        from_attributes = True
 
 
 class ClubListResponse(BaseModel):

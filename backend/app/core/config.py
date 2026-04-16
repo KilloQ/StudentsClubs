@@ -1,6 +1,8 @@
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 
 class Settings(BaseSettings):
+    model_config = ConfigDict()
     APP_NAME: str = "Student Clubs Management"
     DATABASE_URL: str
     SECRET_KEY: str = "dev-secret-change-me"

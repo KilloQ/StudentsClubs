@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class UserRoleUpdate(BaseModel):
@@ -14,11 +14,10 @@ class UserRoleUpdate(BaseModel):
 
 
 class UserAdminResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     username: str
     full_name: str
     role: str
     is_teacher: bool
-
-    class Config:
-        from_attributes = True

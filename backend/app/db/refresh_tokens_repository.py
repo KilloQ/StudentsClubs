@@ -1,5 +1,5 @@
 import hashlib
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 
 from sqlalchemy import select, update
@@ -38,13 +38,13 @@ class RefreshTokensRepository:
 
     async def revoke(self, *, token: RefreshToken, reason: str, revoked_at: Optional[datetime] = None) -> None:
         token.revoked_reason = reason
-        token.revoked_at = revoked_at or datetime.utcnow()
+        token.revoked_at = revoked_at or datetime.now(UTC)
 
     async def revoke_user_tokens(self, *, user_id: int, reason: str) -> None:
         await self._db.execute(
             update(RefreshToken)
             .where(RefreshToken.user_id == user_id)
             .where(RefreshToken.revoked_at.is_(None))
-            .values(revoked_at=datetime.utcnow(), revoked_reason=reason)
+            .values(revoked_at=datetime.now(UTC), revoked_reason=reason)
         )
 

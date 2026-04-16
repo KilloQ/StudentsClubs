@@ -1,6 +1,6 @@
 import bcrypt
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Tuple
 
 from jose import jwt
@@ -30,7 +30,7 @@ class AuthService:
 
     def _create_access_token(self, *, user: User) -> str:
         role = getattr(user, "role", None) or ("teacher" if user.is_teacher else "student")
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         payload = {
             "type": "access",
             "sub": str(user.id),
@@ -43,7 +43,7 @@ class AuthService:
 
     def _create_refresh_token(self) -> Tuple[str, datetime]:
         token = secrets.token_urlsafe(48)
-        expires_at = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        expires_at = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
         return token, expires_at
 
     async def login(self, *, username: str, password: str) -> Token:
@@ -73,7 +73,7 @@ class AuthService:
         if not db_token:
             raise ValueError("Invalid refresh token")
 
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         if db_token.revoked_at is not None:
             await self._refresh_tokens_repo.revoke_user_tokens(
@@ -121,7 +121,7 @@ class AuthService:
         db_token = await self._refresh_tokens_repo.get_by_hash(token_hash)
 
         if db_token:
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             await self._refresh_tokens_repo.revoke(
                 token=db_token,
                 reason="logout",
