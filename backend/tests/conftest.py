@@ -8,9 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///./test_backend.db")
 
-from app.db.database import get_db  # noqa: E402
-from app.db.models import Base  # noqa: E402
-from app.main import app  # noqa: E402
+from app.db.database import get_db
+from app.db.models import Base
+from app.main import app
 
 
 @pytest.fixture(scope="session")
