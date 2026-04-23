@@ -27,7 +27,6 @@ class RefreshTokensRepository:
         token_hash: str,
         expires_at: datetime,
     ) -> RefreshToken:
-        # Ensure datetimes are timezone-naive (Postgres TIMESTAMP WITHOUT TIME ZONE)
         if expires_at.tzinfo is not None:
             expires_at = expires_at.astimezone(UTC).replace(tzinfo=None)
 
