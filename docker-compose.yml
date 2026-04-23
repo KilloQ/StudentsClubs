@@ -30,7 +30,6 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    # Use the real .env stored locally (copy backend/.env.example -> backend/.env)
     env_file:
       - backend/.env
     depends_on:
