@@ -16,6 +16,7 @@ from app.core.config import settings
 
 allow_origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allow_origins,
