@@ -21,8 +21,6 @@ class Settings(BaseSettings):
     PUBLIC_SITE_URL: str = "http://localhost:5173"
     EXTERNAL_WEATHER_API_KEY: str = ""
     EXTERNAL_WEATHER_BASE_URL: str = "https://api.openweathermap.org/data/2.5"
-    # Comma-separated list of allowed CORS origins (e.g. http://localhost:5173,http://localhost:3000)
-    ALLOWED_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
 
     class Config:
         env_file = ".env"

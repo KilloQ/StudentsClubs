@@ -14,7 +14,6 @@ COPY backend /app
 
 EXPOSE 8000
 
-# copy entrypoint and make executable
 COPY backend/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

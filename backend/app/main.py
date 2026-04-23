@@ -12,13 +12,9 @@ from app.api.external import router as external_router
 
 app = FastAPI(title="Student Clubs Management API")
 
-from app.core.config import settings
-
-allow_origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allow_origins,
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
