@@ -20,6 +20,7 @@ export interface ClubSettings {
     description?: string;
     max_students: number;
     recruitment_open: boolean;
+    image_url?: string;
     schedules: Array<{
         id: number;
         day_of_week: string;
@@ -76,5 +77,14 @@ export const deleteScheduleItem = async (clubId: number, scheduleId: number): Pr
 
 export const getClubStats = async (clubId: number): Promise<{ total_students: number }> => {
     return apiFetch<{ total_students: number }>(`${API_BASE_URL}/management/${clubId}/stats`, { method: "GET" });
+};
+
+export const updateClubImage = async (clubId: number, image: File): Promise<{ image_url: string }> => {
+    const formData = new FormData();
+    formData.append("image", image);
+    return apiFetch<{ image_url: string }>(`${API_BASE_URL}/management/${clubId}/image`, {
+        method: "POST",
+        body: formData,
+    });
 };
 

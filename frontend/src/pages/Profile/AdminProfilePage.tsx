@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "../../components/Navbar/Navbar";
 import { useAuth } from "../../contexts/useAuth";
 import { getUsers, updateUserRole, type UserAdmin } from "../../api/admin";
 import { getErrorMessage } from "../../utils/errors";
@@ -13,11 +14,13 @@ const ROLE_LABELS: Record<string, string> = {
 
 export default function AdminProfilePage() {
     const navigate = useNavigate();
-    const { user: currentUser } = useAuth();
+    const { user: currentUser, logout } = useAuth();
     const [users, setUsers] = useState<UserAdmin[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [changingId, setChangingId] = useState<number | null>(null);
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     useEffect(() => {
         loadUsers();
@@ -52,23 +55,38 @@ export default function AdminProfilePage() {
         }
     };
 
+    const handleLogout = async () => {
+        setIsLoggingOut(true);
+        try {
+            await logout();
+            navigate("/login", { replace: true });
+        } finally {
+            setIsLoggingOut(false);
+            setIsLogoutModalOpen(false);
+        }
+    };
+
     if (loading) {
         return <div className="admin-loading">Загрузка...</div>;
     }
 
     return (
         <div className="admin-profile-container">
+            <Navbar />
             <div className="admin-profile-header">
                 <button className="back-button" onClick={handleBackClick}>
                     ← Назад
                 </button>
-                <h1 className="admin-profile-title">Профиль администратора</h1>
             </div>
 
             <div className="admin-profile-content">
+                <h1 className="admin-profile-title">Профиль администратора</h1>
                 <div className="admin-user-info">
                     <h2 className="admin-section-title">Пользователи и роли</h2>
                     <p className="admin-section-desc">Изменяйте роли пользователей в системе.</p>
+                    <button className="logout-profile-button" onClick={() => setIsLogoutModalOpen(true)}>
+                        Выйти из профиля
+                    </button>
                 </div>
 
                 {error && <div className="admin-error">{error}</div>}
@@ -117,6 +135,29 @@ export default function AdminProfilePage() {
                     </table>
                 </div>
             </div>
+            {isLogoutModalOpen && (
+                <div className="logout-modal-overlay" onClick={() => setIsLogoutModalOpen(false)}>
+                    <div className="logout-modal" onClick={(event: MouseEvent<HTMLDivElement>) => event.stopPropagation()}>
+                        <h3 className="logout-modal-title">Вы точно хотите выйти?</h3>
+                        <div className="logout-modal-actions">
+                            <button
+                                className="logout-modal-button secondary"
+                                onClick={() => setIsLogoutModalOpen(false)}
+                                disabled={isLoggingOut}
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                className="logout-modal-button primary"
+                                onClick={handleLogout}
+                                disabled={isLoggingOut}
+                            >
+                                {isLoggingOut ? "Выход..." : "Выйти"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

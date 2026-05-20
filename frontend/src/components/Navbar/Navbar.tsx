@@ -1,21 +1,17 @@
 import "./Navbar.css";
 import { useNavigate } from "react-router-dom";
-import { User, LogOut } from "lucide-react";
 import { useAuth } from "../../contexts/useAuth";
 
 export default function Navbar() {
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
-
-    const handleLogout = () => {
-        logout();
-        navigate("/login");
-    };
+    const { user } = useAuth();
 
     const handleProfileClick = () => {
-        if (user?.role === "admin") {
+        if (!user) {
+            navigate("/login");
+        } else if (user.role === "admin") {
             navigate("/account/admin");
-        } else if (user?.is_teacher) {
+        } else if (user.is_teacher) {
             navigate("/account/teacher");
         } else {
             navigate("/account/profile");
@@ -25,22 +21,12 @@ export default function Navbar() {
     return (
         <div className="navbar">
             <div className="logo">
-                <span className="logo-blue">Студ</span>Кружки
+                <span className="logo-blue">Секции</span>Связист
             </div>
-
-            <div className="navbar-right">
-                {user && <span className="username">{user.full_name}</span>}
-
-                <User 
-                    className="nav-icon" 
-                    size={22} 
-                    onClick={handleProfileClick}
-                />
-                <LogOut 
-                    className="nav-icon" 
-                    size={22} 
-                    onClick={handleLogout}
-                />
+            <div className="navbar-nav">
+                <button className="nav-link-button" onClick={() => navigate("/clubs")}>Секции</button>
+                <button className="nav-link-button" onClick={() => navigate("/news")}>Новости</button>
+                <button className="nav-link-button" onClick={handleProfileClick}>Профиль</button>
             </div>
         </div>
     );

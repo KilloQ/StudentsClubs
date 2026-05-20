@@ -4,6 +4,7 @@ import LoginPage from "./pages/Auth/LoginPage";
 import RegisterPage from "./pages/Auth/RegisterPage";
 import HomePage from "./pages/Home/HomePage";
 import ClubPage from "./pages/Club/ClubPage";
+import NewsPage from "./pages/News/NewsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./NotFound.css";
 
@@ -21,6 +22,7 @@ export default function AppRouter() {
                 {/* Публичные*/}
                 <Route path="/clubs" element={<HomePage />} />
                 <Route path="/clubs/:clubId" element={<ClubPage />} />
+                <Route path="/news" element={<NewsPage />} />
 
                 {/* Служебные*/}
                 <Route path="/login" element={<LoginPage />} />

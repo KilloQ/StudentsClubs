@@ -1,0 +1,109 @@
+.news-page-container {
+    min-height: 100vh;
+    background: #f7f7f7;
+}
+
+.news-page-content {
+    max-width: 840px;
+    margin: 0 auto;
+    padding: 28px 16px 40px 16px;
+}
+
+.news-title {
+    margin: 0 0 20px 0;
+    font-size: 32px;
+    color: #0d6efd;
+}
+
+.news-placeholder {
+    background: #ffffff;
+    border: 1px solid #e3e8f3;
+    border-radius: 14px;
+    padding: 24px;
+    font-size: 18px;
+    color: #4b5563;
+}
+
+.news-error {
+    background: #ffebee;
+    color: #c62828;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+
+.news-feed {
+    display: grid;
+    gap: 12px;
+}
+
+.news-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+.news-image {
+    width: 100%;
+    aspect-ratio: 16 / 8;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    background: #f3f4f6;
+}
+
+.news-meta {
+    display: flex;
+    justify-content: space-between;
+    color: #6b7280;
+    font-size: 13px;
+    padding: 14px 16px 0 16px;
+}
+
+.news-card-title {
+    margin: 8px 14px 6px 14px;
+    font-size: 19px;
+}
+
+.news-card-description {
+    margin: 0 14px 12px 14px;
+    color: #374151;
+    white-space: pre-wrap;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.news-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 14px 12px 14px;
+}
+
+.news-club-link {
+    color: #0d6efd;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.news-like-button {
+    border: none;
+    background: #f3f4f6;
+    border-radius: 10px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.news-like-button.active {
+    background: #fee2e2;
+}
+
+.news-pagination {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 18px;
+}

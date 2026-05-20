@@ -163,3 +163,31 @@
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(17, 153, 142, 0.5);
 }
+
+@media (max-width: 560px) {
+    .modal-overlay {
+        padding: 12px;
+    }
+
+    .modal-content {
+        border-radius: 16px;
+    }
+
+    .modal-header {
+        padding: 18px 14px;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .modal-title {
+        font-size: 18px;
+    }
+
+    .modal-form {
+        padding: 16px 14px;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+        margin-top: 20px;
+    }
+}

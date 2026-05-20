@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar";
 import { deleteClubFile, getClub, getClubFileDownloadUrl, getClubFiles, joinClub, leaveClub, uploadClubFile } from "../../api/clubs";
 import type { ClubDetail, ClubFile } from "../../api/clubs";
+import { getAnnouncements, likeAnnouncement, unlikeAnnouncement, type Announcement } from "../../api/announcements";
 import { useAuth } from "../../contexts/useAuth";
 import { canJoinOrLeaveClub, canManageClubs } from "../../utils/permissions";
 import { Seo } from "../../seo/seo";
@@ -20,6 +21,7 @@ export default function ClubPage() {
     const [leaving, setLeaving] = useState(false);
     const [files, setFiles] = useState<ClubFile[]>([]);
     const [uploading, setUploading] = useState(false);
+    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
     const loadClub = useCallback(async () => {
         try {
@@ -31,6 +33,8 @@ export default function ClubPage() {
             } else {
                 setFiles([]);
             }
+            const announcementsResponse = await getAnnouncements({ club_id: Number(clubId), page: 1, page_size: 5 });
+            setAnnouncements(announcementsResponse.items);
         } catch (err: unknown) {
             setError(getErrorMessage(err, "Ошибка загрузки кружка"));
         } finally {
@@ -129,6 +133,21 @@ export default function ClubPage() {
             setFiles(fileList);
         } catch (err: unknown) {
             setError(getErrorMessage(err, "Ошибка удаления файла"));
+        }
+    };
+
+    const handleToggleAnnouncementLike = async (announcement: Announcement) => {
+        if (!user) return;
+        try {
+            if (announcement.liked_by_me) {
+                await unlikeAnnouncement(announcement.id);
+            } else {
+                await likeAnnouncement(announcement.id);
+            }
+            const announcementsResponse = await getAnnouncements({ club_id: Number(clubId), page: 1, page_size: 5 });
+            setAnnouncements(announcementsResponse.items);
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка изменения лайка"));
         }
     };
 
@@ -244,6 +263,36 @@ export default function ClubPage() {
                                     ))
                                 ) : (
                                     <div>Расписание не установлено</div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="club-section">
+                            <h3 className="section-title">Объявления</h3>
+                            <div className="club-announcements-list">
+                                {announcements.length === 0 ? (
+                                    <div className="file-empty">Для этого кружка объявлений пока нет</div>
+                                ) : (
+                                    announcements.map((announcement) => (
+                                        <article key={announcement.id} className="club-announcement-card">
+                                            <img src={announcement.image_url} alt={announcement.title} className="club-announcement-image" />
+                                            <div className="club-announcement-body">
+                                                <h4>{announcement.title}</h4>
+                                                <div className="club-announcement-meta">
+                                                    <span>{announcement.author_name}</span>
+                                                    <span>{new Date(announcement.created_at).toLocaleString("ru-RU")}</span>
+                                                </div>
+                                                <p>{announcement.description}</p>
+                                                <button
+                                                    className={`announcement-like-btn ${announcement.liked_by_me ? "active" : ""}`}
+                                                    onClick={() => handleToggleAnnouncementLike(announcement)}
+                                                    disabled={!user}
+                                                >
+                                                    ❤️ {announcement.likes_count}
+                                                </button>
+                                            </div>
+                                        </article>
+                                    ))
                                 )}
                             </div>
                         </div>

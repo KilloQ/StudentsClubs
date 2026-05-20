@@ -25,10 +25,10 @@ vi.mock("../../seo/seo", () => ({ Seo: () => null }));
 
 describe("HomePage scenarios", () => {
   it("renders clubs and supports filtering/pagination controls", async () => {
-    getCategoriesMock.mockResolvedValue(["Все", "Спортивные"]);
+    getCategoriesMock.mockResolvedValue(["Все", "Активные виды спорта"]);
     getWeatherMock.mockResolvedValue({ temp_c: 12, condition: "clear" });
     getClubsMock.mockResolvedValue({
-      items: [{ id: 7, title: "Football", category: "Спортивные", image_url: null }],
+      items: [{ id: 7, title: "Football", category: "Активные виды спорта", image_url: null }],
       total: 1,
       page: 1,
       page_size: 12,

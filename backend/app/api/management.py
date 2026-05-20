@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 from typing import List
@@ -11,8 +13,26 @@ from app.schemas.management import (
 )
 from app.api.auth import get_current_user
 from app.core.permissions import is_admin, require_teacher
+from app.core.config import settings
+from app.services.storage_service import StorageService
 
 router = APIRouter()
+_storage: Optional[StorageService] = None
+
+
+def get_storage() -> StorageService:
+    global _storage
+    if _storage is None:
+        _storage = StorageService()
+    return _storage
+
+
+def resolve_image_url(club: Club) -> Optional[str]:
+    if not club.image_url:
+        return None
+    if club.image_url.startswith(("http://", "https://")):
+        return club.image_url
+    return f"{settings.PUBLIC_API_BASE_URL.rstrip('/')}/clubs/{club.id}/image"
 
 
 async def verify_club_owner_or_admin(club_id: int, user: User, db: AsyncSession) -> Club:
@@ -161,6 +181,7 @@ async def get_club_settings(
         "description": club.description,
         "max_students": club.max_students,
         "recruitment_open": club.recruitment_open,
+        "image_url": resolve_image_url(club),
         "schedules": [
             {
                 "id": s.id,
@@ -195,6 +216,42 @@ async def update_club_settings(
     await db.refresh(club)
     
     return {"message": "Settings updated successfully"}
+
+
+@router.post("/{club_id}/image")
+async def update_club_image(
+    club_id: int,
+    image: UploadFile = File(...),
+    current_user: User = Depends(require_teacher),
+    db: AsyncSession = Depends(get_db),
+):
+    club = await verify_club_owner_or_admin(club_id, current_user, db)
+
+    if image.content_type not in {"image/jpeg", "image/png"}:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Допустимы только JPG и PNG")
+
+    payload = await image.read()
+    if len(payload) == 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Файл не должен быть пустым")
+    if len(payload) > settings.FILE_MAX_SIZE_BYTES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Файл превышает допустимый размер")
+
+    storage = get_storage()
+    object_key = storage.build_object_key(club_id, image.filename or "club-image")
+    storage.upload_file(
+        object_key=object_key,
+        content=payload,
+        content_type=image.content_type,
+        metadata={"uploaded_by": str(current_user.id), "club_id": str(club_id), "kind": "club-image"},
+    )
+
+    if club.image_url and not club.image_url.startswith(("http://", "https://")):
+        storage.delete_file(club.image_url)
+    club.image_url = object_key
+    await db.commit()
+    await db.refresh(club)
+
+    return {"image_url": resolve_image_url(club)}
 
 
 @router.post("/{club_id}/schedule")

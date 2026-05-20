@@ -1,15 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "../../components/Navbar/Navbar";
 import { getStudentProfile } from "../../api/profile";
 import type { StudentProfile } from "../../api/profile";
 import { getErrorMessage } from "../../utils/errors";
+import { useAuth } from "../../contexts/useAuth";
 import "./StudentProfilePage.css";
 
 export default function StudentProfilePage() {
     const navigate = useNavigate();
+    const { logout } = useAuth();
     const [profile, setProfile] = useState<StudentProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     useEffect(() => {
         loadProfile();
@@ -34,6 +39,17 @@ export default function StudentProfilePage() {
         navigate("/clubs");
     };
 
+    const handleLogout = async () => {
+        setIsLoggingOut(true);
+        try {
+            await logout();
+            navigate("/login", { replace: true });
+        } finally {
+            setIsLoggingOut(false);
+            setIsLogoutModalOpen(false);
+        }
+    };
+
     if (loading) {
         return <div className="loading-message">Загрузка...</div>;
     }
@@ -44,23 +60,23 @@ export default function StudentProfilePage() {
 
     return (
         <div className="profile-container">
-            {/* Верхняя панель */}
+            <Navbar />
             <div className="profile-header">
                 <button className="back-button" onClick={handleBackClick}>
                     ← Назад
                 </button>
-                <h1 className="profile-title">Профиль</h1>
             </div>
 
-            {/* Основной контент */}
             <div className="profile-content">
-                {/* Информация о пользователе */}
+                <h1 className="profile-title">Профиль</h1>
                 <div className="user-info">
                     <h2 className="user-name">{profile.full_name}</h2>
                     <p className="user-role">Студент</p>
+                    <button className="logout-profile-button" onClick={() => setIsLogoutModalOpen(true)}>
+                        Выйти из профиля
+                    </button>
                 </div>
 
-                {/* Статистика */}
                 <div className="stats-grid">
                     <div className="stat-card">
                         <div className="stat-number">{profile.stats.my_clubs}</div>
@@ -76,10 +92,8 @@ export default function StudentProfilePage() {
                     </div>
                 </div>
 
-                {/* Если есть кружки - показываем блоки Мои кружки и Расписание */}
                 {profile.stats.my_clubs > 0 ? (
                     <div className="clubs-schedule-container">
-                        {/* Блок Мои кружки */}
                         <div className="my-clubs-section">
                             <h3 className="section-title">Мои кружки</h3>
                             <div className="club-details">
@@ -113,7 +127,6 @@ export default function StudentProfilePage() {
                             </div>
                         </div>
 
-                        {/* Блок Расписание */}
                         <div className="schedule-section">
                             <h3 className="section-title">Расписание</h3>
                             <div className="schedule-list">
@@ -131,7 +144,6 @@ export default function StudentProfilePage() {
                         </div>
                     </div>
                 ) : (
-                    /* Если нет кружков - показываем сообщение */
                     <div className="no-clubs-section">
                         <div className="no-clubs-message">
                             Вы пока не состоите ни в одном кружке
@@ -145,6 +157,29 @@ export default function StudentProfilePage() {
                     </div>
                 )}
             </div>
+            {isLogoutModalOpen && (
+                <div className="logout-modal-overlay" onClick={() => setIsLogoutModalOpen(false)}>
+                    <div className="logout-modal" onClick={(event: MouseEvent<HTMLDivElement>) => event.stopPropagation()}>
+                        <h3 className="logout-modal-title">Вы точно хотите выйти?</h3>
+                        <div className="logout-modal-actions">
+                            <button
+                                className="logout-modal-button secondary"
+                                onClick={() => setIsLogoutModalOpen(false)}
+                                disabled={isLoggingOut}
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                className="logout-modal-button primary"
+                                onClick={handleLogout}
+                                disabled={isLoggingOut}
+                            >
+                                {isLoggingOut ? "Выход..." : "Выйти"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

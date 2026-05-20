@@ -2,6 +2,7 @@ from datetime import date
 from typing import List, Optional, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
+from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
@@ -34,6 +35,14 @@ def get_storage() -> StorageService:
     return _storage
 
 
+def _resolve_club_image_url(club: Club) -> Optional[str]:
+    if not club.image_url:
+        return None
+    if club.image_url.startswith(("http://", "https://")):
+        return club.image_url
+    return f"{settings.PUBLIC_API_BASE_URL.rstrip('/')}/clubs/{club.id}/image"
+
+
 def _club_to_response(club: Club) -> dict:
     return {
         "id": club.id,
@@ -42,7 +51,7 @@ def _club_to_response(club: Club) -> dict:
         "category": club.category,
         "max_students": club.max_students,
         "recruitment_open": club.recruitment_open,
-        "image_url": club.image_url,
+        "image_url": _resolve_club_image_url(club),
         "owner_id": club.owner_id,
         "schedules": [
             {
@@ -154,6 +163,25 @@ async def get_club(
     club_dict["is_member"] = is_member
     
     return ClubDetailResponse(**club_dict)
+
+
+@router.get("/{club_id}/image")
+async def get_club_image_url(
+    club_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(Club).where(Club.id == club_id))
+    club = result.scalar_one_or_none()
+    if not club or not club.image_url:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Изображение не найдено")
+
+    if club.image_url.startswith(("http://", "https://")):
+        return RedirectResponse(url=club.image_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+
+    return RedirectResponse(
+        url=get_storage().generate_presigned_download_url(club.image_url),
+        status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+    )
 
 
 @router.post("/", response_model=ClubResponse)
@@ -453,12 +481,9 @@ async def delete_file(
 async def get_categories():
     return [
         "Все",
-        "Спортивные",
         "Творчество",
-        "Точные науки",
-        "Инжиниринг",
-        "БПЛА",
-        "Информационная безопасность",
-        "Связь",
-        "Программирование"
+        "Активные виды спорта",
+        "Командные игры",
+        "Нагрузки высокой интенсивности",
+        "Нагрузки низкой интенсивности",
     ]

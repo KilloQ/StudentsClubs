@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import Navbar from "../../components/Navbar/Navbar";
 import {
     getClubStudents,
     markAttendance,
@@ -7,7 +8,8 @@ import {
     updateClubSettings,
     addScheduleItem,
     deleteScheduleItem,
-    getClubStats
+    getClubStats,
+    updateClubImage
 } from "../../api/management";
 import type {
     StudentAttendanceInfo,
@@ -16,13 +18,14 @@ import type {
     ClubSettingsUpdate,
     ScheduleItemCreate
 } from "../../api/management";
+import { createAnnouncement, deleteAnnouncement, getAnnouncements, type Announcement } from "../../api/announcements";
 import { getErrorMessage } from "../../utils/errors";
 import "./ClubManagementPage.css";
 
 export default function ClubManagementPage() {
     const navigate = useNavigate();
     const { clubId } = useParams();
-    const [activeTab, setActiveTab] = useState<"students" | "attendance" | "settings">("students");
+    const [activeTab, setActiveTab] = useState<"students" | "attendance" | "settings" | "announcements">("students");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -41,6 +44,10 @@ export default function ClubManagementPage() {
         start_time: "",
         location: ""
     });
+    const [imageUploading, setImageUploading] = useState(false);
+    const [announcementForm, setAnnouncementForm] = useState({ title: "", description: "", image: null as File | null });
+    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+    const [announcementSaving, setAnnouncementSaving] = useState(false);
 
     // Статистика
     const [totalStudents, setTotalStudents] = useState(0);
@@ -54,6 +61,9 @@ export default function ClubManagementPage() {
             } else if (activeTab === "settings") {
                 const settingsData = await getClubSettings(Number(clubId));
                 setSettings(settingsData);
+            } else if (activeTab === "announcements") {
+                const announcementsData = await getAnnouncements({ club_id: Number(clubId), page: 1, page_size: 20 });
+                setAnnouncements(announcementsData.items);
             }
             const stats = await getClubStats(Number(clubId));
             setTotalStudents(stats.total_students);
@@ -158,6 +168,68 @@ export default function ClubManagementPage() {
         }
     };
 
+    const handleClubImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (!clubId || !settings || !event.target.files?.length) return;
+        const file = event.target.files[0];
+        const allowedTypes = ["image/jpeg", "image/png"];
+        const maxSizeBytes = 5 * 1024 * 1024;
+
+        if (!allowedTypes.includes(file.type)) {
+            setError("Разрешены только JPG и PNG");
+            event.target.value = "";
+            return;
+        }
+        if (file.size > maxSizeBytes) {
+            setError("Файл слишком большой (максимум 5 МБ)");
+            event.target.value = "";
+            return;
+        }
+
+        setImageUploading(true);
+        setError("");
+        try {
+            const response = await updateClubImage(Number(clubId), file);
+            setSettings({ ...settings, image_url: response.image_url });
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка загрузки изображения"));
+        } finally {
+            setImageUploading(false);
+            event.target.value = "";
+        }
+    };
+
+    const handleCreateAnnouncement = async () => {
+        if (!clubId || !announcementForm.image || !announcementForm.title.trim() || !announcementForm.description.trim()) {
+            setError("Заполните поля объявления и выберите изображение");
+            return;
+        }
+        setAnnouncementSaving(true);
+        try {
+            await createAnnouncement({
+                club_id: Number(clubId),
+                title: announcementForm.title.trim(),
+                description: announcementForm.description.trim(),
+                image: announcementForm.image,
+            });
+            setAnnouncementForm({ title: "", description: "", image: null });
+            await loadData();
+            setError("");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка публикации объявления"));
+        } finally {
+            setAnnouncementSaving(false);
+        }
+    };
+
+    const handleDeleteAnnouncement = async (announcementId: number) => {
+        try {
+            await deleteAnnouncement(announcementId);
+            await loadData();
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка удаления объявления"));
+        }
+    };
+
     const daysOfWeek = [
         "Понедельник",
         "Вторник",
@@ -168,29 +240,26 @@ export default function ClubManagementPage() {
         "Воскресенье"
     ];
 
-    if (loading && !settings && activeTab === "settings") {
+    if (loading && !settings && (activeTab === "settings" || activeTab === "announcements")) {
         return <div className="loading-message">Загрузка...</div>;
     }
 
     return (
         <div className="management-container">
-            {/* Верхняя панель */}
+            <Navbar />
             <div className="management-header">
                 <button className="back-button" onClick={handleBackClick}>
                     ← Назад к моим кружкам
                 </button>
-                <h1 className="management-title">{settings?.title || "Панель преподавателя"}</h1>
             </div>
 
-            {/* Основной контент */}
             <div className="management-content">
-                {/* Блок Всего студентов */}
+                <h1 className="management-title">{settings?.title || "Панель преподавателя"}</h1>
                 <div className="total-students-card">
                     <div className="total-students-number">{totalStudents}</div>
                     <div className="total-students-label">Всего студентов</div>
                 </div>
 
-                {/* Панель вкладок */}
                 <div className="tabs-container">
                     <button 
                         className={`tab-button ${activeTab === "students" ? "active" : ""}`}
@@ -210,11 +279,16 @@ export default function ClubManagementPage() {
                     >
                         Настройки
                     </button>
+                    <button
+                        className={`tab-button ${activeTab === "announcements" ? "active" : ""}`}
+                        onClick={() => setActiveTab("announcements")}
+                    >
+                        Объявления
+                    </button>
                 </div>
 
                 {error && <div className="error-message">{error}</div>}
 
-                {/* Контент вкладок */}
                 <div className="tab-content">
                     {activeTab === "students" && (
                         <div className="students-tab">
@@ -311,6 +385,24 @@ export default function ClubManagementPage() {
                                     />
                                 </div>
                                 <div className="form-group">
+                                    <label className="form-label">Изображение кружка</label>
+                                    {settings.image_url ? (
+                                        <img
+                                            src={settings.image_url}
+                                            alt={settings.title}
+                                            className="club-settings-image"
+                                        />
+                                    ) : null}
+                                    <input
+                                        type="file"
+                                        className="form-input"
+                                        accept="image/png,image/jpeg"
+                                        onChange={handleClubImageUpload}
+                                        disabled={imageUploading}
+                                    />
+                                    {imageUploading ? <div className="loading-message">Загрузка изображения...</div> : null}
+                                </div>
+                                <div className="form-group">
                                     <label className="form-label">Максимум студентов</label>
                                     <input 
                                         type="number" 
@@ -331,7 +423,6 @@ export default function ClubManagementPage() {
                                     </div>
                                 </div>
 
-                                {/* Редактор расписания */}
                                 <div className="schedule-editor">
                                     <h4 className="editor-title">Расписание</h4>
                                     <div className="schedule-form">
@@ -365,7 +456,6 @@ export default function ClubManagementPage() {
                                         </button>
                                     </div>
 
-                                    {/* Список занятий */}
                                     <div className="schedule-list">
                                         {settings.schedules.map((item) => (
                                             <div key={item.id} className="schedule-item">
@@ -384,7 +474,6 @@ export default function ClubManagementPage() {
                                         ))}
                                     </div>
                                 </div>
-
                                 <button 
                                     className="save-changes-button" 
                                     onClick={handleSaveChanges}
@@ -392,6 +481,50 @@ export default function ClubManagementPage() {
                                 >
                                     {saving ? "Сохранение..." : "Сохранить изменения"}
                                 </button>
+                            </div>
+                        </div>
+                    )}
+                    {activeTab === "announcements" && (
+                        <div className="settings-tab">
+                            <h3 className="tab-title">Объявления</h3>
+                            <div className="schedule-editor">
+                                <div className="schedule-form">
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="Заголовок объявления"
+                                        value={announcementForm.title}
+                                        onChange={(e) => setAnnouncementForm({ ...announcementForm, title: e.target.value })}
+                                    />
+                                    <textarea
+                                        className="form-textarea"
+                                        placeholder="Текст объявления"
+                                        value={announcementForm.description}
+                                        onChange={(e) => setAnnouncementForm({ ...announcementForm, description: e.target.value })}
+                                    />
+                                    <input
+                                        type="file"
+                                        className="form-input"
+                                        accept="image/png,image/jpeg"
+                                        onChange={(e) => setAnnouncementForm({ ...announcementForm, image: e.target.files?.[0] || null })}
+                                    />
+                                    <button className="add-schedule-button" onClick={handleCreateAnnouncement} disabled={announcementSaving}>
+                                        {announcementSaving ? "Публикация..." : "Опубликовать"}
+                                    </button>
+                                </div>
+                                <div className="schedule-list">
+                                    {announcements.map((item) => (
+                                        <div key={item.id} className="schedule-item">
+                                            <div className="schedule-info">
+                                                <span className="schedule-day">{item.title}</span>
+                                                <span className="schedule-location">{item.author_name}</span>
+                                            </div>
+                                            <button className="delete-schedule-button" onClick={() => handleDeleteAnnouncement(item.id)}>
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     )}

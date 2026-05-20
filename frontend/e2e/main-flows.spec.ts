@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/clubs/categories/list", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(["Все", "Спортивные"]) });
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(["Все", "Активные виды спорта"]) });
   });
 
   await page.route("**/clubs/?**", async (route) => {
@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        items: [{ id: 101, title: "Football Club", category: "Спортивные", image_url: null }],
+        items: [{ id: 101, title: "Football Club", category: "Активные виды спорта", image_url: null }],
         total: 1,
         page: 1,
         page_size: 12,

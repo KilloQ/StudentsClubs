@@ -50,3 +50,33 @@
     border: 1px solid #eaeaea;
     display: inline-block;
 }
+
+@media (max-width: 900px) {
+    .club-image,
+    .club-gradient {
+        height: 180px;
+    }
+
+    .club-info {
+        padding: 18px;
+    }
+
+    .club-info h3 {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 560px) {
+    .club-image,
+    .club-gradient {
+        height: 160px;
+    }
+
+    .club-info {
+        padding: 14px;
+    }
+
+    .club-info h3 {
+        font-size: 18px;
+    }
+}

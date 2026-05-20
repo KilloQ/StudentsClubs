@@ -1,20 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "../../components/Navbar/Navbar";
 import CreateClubModal from "../../modals/CreateClubModal";
 import { getTeacherProfile } from "../../api/profile";
 import type { TeacherProfile } from "../../api/profile";
 import { createClub, getCategories } from "../../api/clubs";
 import type { CreateClubRequest } from "../../api/clubs";
 import { getErrorMessage } from "../../utils/errors";
+import { useAuth } from "../../contexts/useAuth";
 import "./TeacherProfilePage.css";
 
 export default function TeacherProfilePage() {
     const navigate = useNavigate();
+    const { logout } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [profile, setProfile] = useState<TeacherProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [categories, setCategories] = useState<string[]>([]);
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     useEffect(() => {
         loadProfile();
@@ -67,6 +72,17 @@ export default function TeacherProfilePage() {
         navigate(`/clubs/${clubId}/manage`);
     };
 
+    const handleLogout = async () => {
+        setIsLoggingOut(true);
+        try {
+            await logout();
+            navigate("/login", { replace: true });
+        } finally {
+            setIsLoggingOut(false);
+            setIsLogoutModalOpen(false);
+        }
+    };
+
     if (loading) {
         return <div className="loading-message">Загрузка...</div>;
     }
@@ -81,14 +97,15 @@ export default function TeacherProfilePage() {
 
     return (
         <div className="teacher-profile-container">
+            <Navbar />
             <div className="teacher-profile-header">
                 <button className="back-button" onClick={handleBackClick}>
                     ← Назад
                 </button>
-                <h1 className="teacher-profile-title">Профиль преподавателя</h1>
             </div>
 
             <div className="teacher-profile-content">
+                <h1 className="teacher-profile-title">Профиль преподавателя</h1>
                 <div className="teacher-user-info">
                     <div className="user-info-text">
                         <h2 className="teacher-user-name">{profile.full_name}</h2>
@@ -101,6 +118,9 @@ export default function TeacherProfilePage() {
                         onClick={handleCreateClubClick}
                     >
                         + Создать кружок
+                    </button>
+                    <button className="logout-profile-button" onClick={() => setIsLogoutModalOpen(true)}>
+                        Выйти из профиля
                     </button>
                 </div>
 
@@ -142,6 +162,29 @@ export default function TeacherProfilePage() {
                 onCreate={handleCreateClub}
                 categories={categories}
             />
+            {isLogoutModalOpen && (
+                <div className="logout-modal-overlay" onClick={() => setIsLogoutModalOpen(false)}>
+                    <div className="logout-modal" onClick={(event: MouseEvent<HTMLDivElement>) => event.stopPropagation()}>
+                        <h3 className="logout-modal-title">Вы точно хотите выйти?</h3>
+                        <div className="logout-modal-actions">
+                            <button
+                                className="logout-modal-button secondary"
+                                onClick={() => setIsLogoutModalOpen(false)}
+                                disabled={isLoggingOut}
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                className="logout-modal-button primary"
+                                onClick={handleLogout}
+                                disabled={isLoggingOut}
+                            >
+                                {isLoggingOut ? "Выход..." : "Выйти"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

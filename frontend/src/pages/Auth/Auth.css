@@ -136,3 +136,32 @@ html, body {
     font-weight: 500;
     box-shadow: 0 2px 8px rgba(244, 67, 54, 0.2);
 }
+
+@media (max-width: 560px) {
+    .auth-container {
+        padding: 12px;
+    }
+
+    .auth-card {
+        padding: 24px 16px;
+        border-radius: 16px;
+    }
+
+    .auth-title {
+        font-size: 24px;
+    }
+
+    .auth-subtitle {
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+
+    .auth-tabs {
+        margin-bottom: 20px;
+    }
+
+    .tab {
+        font-size: 14px;
+        padding: 10px 0;
+    }
+}

@@ -21,6 +21,7 @@ class ClubSettingsUpdate(BaseModel):
     description: Optional[str] = None
     max_students: Optional[int] = None
     recruitment_open: Optional[bool] = None
+    image_url: Optional[str] = None
 
 
 class ScheduleItemCreate(BaseModel):

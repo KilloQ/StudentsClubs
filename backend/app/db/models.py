@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date, Time, Text, DateTime, func
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date, Time, Text, DateTime, func, UniqueConstraint
 from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
 
@@ -110,4 +110,32 @@ class ClubFile(Base):
     created_at = Column(DateTime, default=func.now(), nullable=False)
 
     club = relationship("Club", back_populates="files")
+
+
+class Announcement(Base):
+    __tablename__ = "announcements"
+
+    id = Column(Integer, primary_key=True, index=True)
+    club_id = Column(Integer, ForeignKey("clubs.id", ondelete="CASCADE"), nullable=False, index=True)
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=False)
+    image_url = Column(String(512), nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False, index=True)
+
+    club = relationship("Club")
+    author = relationship("User")
+    likes = relationship("AnnouncementLike", back_populates="announcement", cascade="all, delete-orphan")
+
+
+class AnnouncementLike(Base):
+    __tablename__ = "announcement_likes"
+    __table_args__ = (UniqueConstraint("announcement_id", "user_id", name="uq_announcement_like_user"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    announcement_id = Column(Integer, ForeignKey("announcements.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    announcement = relationship("Announcement", back_populates="likes")
 
