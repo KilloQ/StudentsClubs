@@ -27,6 +27,14 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+test("landing page smoke", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Связист");
+  await page.getByRole("button", { name: "Секции с набором" }).click();
+  await expect(page).toHaveURL(/\/clubs/);
+  await expect(page.getByText("Каталог кружков")).toBeVisible();
+});
+
 test("catalog filtering and pagination smoke", async ({ page }) => {
   await page.goto("/clubs");
   await expect(page.getByText("Каталог кружков")).toBeVisible();

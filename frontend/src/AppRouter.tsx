@@ -1,8 +1,9 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import LoginPage from "./pages/Auth/LoginPage";
 import RegisterPage from "./pages/Auth/RegisterPage";
 import HomePage from "./pages/Home/HomePage";
+import LandingPage from "./pages/Landing/LandingPage";
 import ClubPage from "./pages/Club/ClubPage";
 import NewsPage from "./pages/News/NewsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -17,7 +18,7 @@ export default function AppRouter() {
     return (
         <Suspense fallback={<div className="loading-message">Загрузка...</div>}>
             <Routes>
-                <Route path="/" element={<Navigate to="/clubs" replace />} />
+                <Route path="/" element={<LandingPage />} />
 
                 {/* Публичные*/}
                 <Route path="/clubs" element={<HomePage />} />

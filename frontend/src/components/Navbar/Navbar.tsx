@@ -1,6 +1,7 @@
 import "./Navbar.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
+import { Button, Logo } from "../../shared/components";
 
 export default function Navbar() {
     const navigate = useNavigate();
@@ -20,13 +21,20 @@ export default function Navbar() {
 
     return (
         <div className="navbar">
-            <div className="logo">
-                <span className="logo-blue">Секции</span>Связист
-            </div>
+            <Logo as="button" className="navbar-logo" onClick={() => navigate("/")} />
             <div className="navbar-nav">
-                <button className="nav-link-button" onClick={() => navigate("/clubs")}>Секции</button>
-                <button className="nav-link-button" onClick={() => navigate("/news")}>Новости</button>
-                <button className="nav-link-button" onClick={handleProfileClick}>Профиль</button>
+                <Button variant="nav" onClick={() => navigate("/")}>
+                    Главная
+                </Button>
+                <Button variant="nav" onClick={() => navigate("/clubs")}>
+                    Секции
+                </Button>
+                <Button variant="nav" onClick={() => navigate("/news")}>
+                    Новости
+                </Button>
+                <Button variant="nav" onClick={handleProfileClick}>
+                    Профиль
+                </Button>
             </div>
         </div>
     );

@@ -1,6 +1,6 @@
 .news-page-container {
     min-height: 100vh;
-    background: #f7f7f7;
+    background: var(--color-bg-alt);
 }
 
 .news-page-content {
@@ -12,7 +12,7 @@
 .news-title {
     margin: 0 0 20px 0;
     font-size: 32px;
-    color: #0d6efd;
+    color: var(--color-primary);
 }
 
 .news-placeholder {
@@ -82,7 +82,7 @@
 }
 
 .news-club-link {
-    color: #0d6efd;
+    color: var(--color-primary);
     text-decoration: none;
     font-weight: 600;
 }

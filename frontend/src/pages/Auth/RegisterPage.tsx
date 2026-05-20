@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
 import { getErrorMessage } from "../../utils/errors";
+import { Button } from "../../shared/components";
 import "./Auth.css";
 
 export default function RegisterPage() {
@@ -117,9 +118,9 @@ export default function RegisterPage() {
                         required
                     />
 
-                    <button className="auth-button" type="submit" disabled={loading}>
+                    <Button variant="primary" type="submit" fullWidth disabled={loading}>
                         {loading ? "Регистрация..." : "Зарегистрироваться"}
-                    </button>
+                    </Button>
                 </form>
             </div>
         </div>

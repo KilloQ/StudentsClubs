@@ -1,0 +1,31 @@
+.chip:not(.ui-chip):hover,
+.chip:not(.ui-chip).active {
+    transform: none;
+    box-shadow: none;
+}
+
+.chip:not(.ui-chip).active {
+    box-shadow: none;
+}
+
+.club-card:hover {
+    transform: none;
+    box-shadow: var(--shadow-md);
+}
+
+.auth-button:hover:not(:disabled) {
+    transform: none;
+    box-shadow: none;
+}
+
+.page-btn:hover:not(:disabled) {
+    transform: none;
+}
+
+[class*="profile"] button:hover:not(:disabled),
+.teacher-stat-card:hover,
+.student-stat-card:hover,
+.club-management-tab:hover,
+.modal-btn:hover:not(:disabled) {
+    transform: none !important;
+}

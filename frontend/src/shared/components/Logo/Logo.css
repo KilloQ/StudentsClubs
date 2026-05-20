@@ -1,0 +1,36 @@
+.ui-logo {
+    font-weight: 700;
+    font-size: inherit;
+    line-height: 1.1;
+    color: var(--color-text);
+}
+
+.ui-logo--on-dark,
+.ui-logo--on-dark .ui-logo__accent {
+    color: var(--color-on-primary);
+}
+
+.ui-logo--on-dark .ui-logo__accent {
+    color: var(--color-accent-on-dark);
+}
+
+.ui-logo--footer {
+    color: var(--color-on-primary);
+}
+
+.ui-logo--footer .ui-logo__accent {
+    color: var(--color-primary-lighter);
+}
+
+.ui-logo__accent {
+    color: var(--color-primary);
+}
+
+.ui-logo--button {
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}

@@ -42,7 +42,7 @@
 
 /* Верхняя часть с градиентом */
 .club-header-gradient {
-    background: linear-gradient(135deg, #3c5be8 0%, #312af7 100%);
+    background: var(--gradient-primary);
     padding: 40px 32px;
     color: white;
 }
@@ -129,12 +129,12 @@
     font-size: 24px;
     font-weight: 700;
     margin: 0 0 20px 0;
-    background: linear-gradient(135deg, #3c5be8 0%, #312af7 100%);
+    background: var(--gradient-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     padding-bottom: 12px;
-    border-bottom: 3px solid #667eea;
+    border-bottom: 3px solid var(--color-primary);
 }
 
 .club-description {
@@ -174,12 +174,12 @@
 
 .schedule-day {
     font-weight: 700;
-    color: #667eea;
+    color: var(--color-primary);
     font-size: 16px;
 }
 
 .schedule-time {
-    color: #764ba2;
+    color: var(--color-primary-dark);
     font-weight: 600;
     font-size: 15px;
 }
@@ -193,7 +193,7 @@
 /* Кнопка записи */
 .join-button {
     width: 100%;
-    background: linear-gradient(135deg, #3c5be8 0%, #312af7 100%);
+    background: var(--gradient-primary);
     color: white;
     border: none;
     padding: 18px 24px;
@@ -300,8 +300,8 @@
 }
 
 .file-btn {
-    border: 1px solid #0d6efd;
-    background: #0d6efd;
+    border: 1px solid var(--color-primary);
+    background: var(--color-primary);
     color: #fff;
     border-radius: 6px;
     padding: 6px 10px;

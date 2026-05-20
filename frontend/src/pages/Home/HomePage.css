@@ -4,13 +4,11 @@
     margin: 0 auto;
 }
 
-h2 {
+.home-container h2 {
     margin-bottom: 24px;
     font-size: 28px;
     font-weight: 700;
-    color: #333;
-    -webkit-background-clip: text;
-    background-clip: text;
+    color: var(--color-heading);
 }
 
 .chips {
@@ -22,28 +20,28 @@ h2 {
 
 .chip {
     padding: 12px 24px;
-    border-radius: 25px;
-    background: #eee;
+    border-radius: var(--radius-pill);
+    background: var(--color-bg-page);
     border: 2px solid transparent;
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 15px;
     font-weight: 500;
-    color: #555;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    color: var(--color-text-secondary);
+    box-shadow: var(--shadow-sm);
 }
 
 .chip:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    background: #dcdcdc;
+    box-shadow: var(--shadow-md);
+    background: var(--color-primary-soft);
 }
 
 .chip.active {
-    background: #0d6efd;
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
     border-color: transparent;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: var(--shadow-primary);
     transform: translateY(-2px);
 }
 
@@ -57,10 +55,10 @@ h2 {
 .no-clubs-message {
     text-align: center;
     padding: 60px 40px;
-    color: #888;
+    color: var(--color-text-muted);
     font-size: 18px;
     font-weight: 500;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     margin-top: 40px;
 }
 
@@ -74,11 +72,18 @@ h2 {
 
 .filter-input,
 .filter-select {
-    border: 1px solid #d3d3d3;
-    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
     padding: 10px 12px;
     font-size: 14px;
-    background: #fff;
+    background: var(--color-bg);
+}
+
+.filter-input:focus,
+.filter-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: var(--focus-ring);
 }
 
 .filter-input {
@@ -96,7 +101,7 @@ h2 {
     align-items: center;
     gap: 8px;
     font-size: 14px;
-    color: #333;
+    color: var(--color-text);
 }
 
 .pagination {
@@ -108,23 +113,23 @@ h2 {
 }
 
 .page-btn {
-    border: 1px solid #0d6efd;
-    background: #0d6efd;
-    color: #fff;
-    border-radius: 8px;
+    border: 1px solid var(--color-primary);
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    border-radius: var(--radius-sm);
     padding: 8px 14px;
     cursor: pointer;
 }
 
 .page-btn:disabled {
-    background: #92b9f8;
-    border-color: #92b9f8;
+    background: var(--color-primary-soft);
+    border-color: var(--color-primary-soft);
     cursor: not-allowed;
 }
 
 .page-info {
     font-size: 14px;
-    color: #444;
+    color: var(--color-text-secondary);
 }
 
 @media (max-width: 900px) {
@@ -132,7 +137,7 @@ h2 {
         padding: 24px 20px 32px;
     }
 
-    h2 {
+    .home-container h2 {
         font-size: 22px;
         margin-bottom: 18px;
     }

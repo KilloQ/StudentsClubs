@@ -40,7 +40,7 @@
     align-items: center;
     padding: 28px 36px;
     border-bottom: 2px solid #f0f0f0;
-    background: linear-gradient(135deg, #8195f0 0%, #4c41e1 50%, #3606f4 100%);
+    background: var(--gradient-primary-wide);
     border-radius: 24px 24px 0 0;
 }
 
@@ -107,7 +107,7 @@
 .form-select:focus,
 .form-textarea:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: var(--color-primary);
     background: white;
     box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
     transform: translateY(-1px);

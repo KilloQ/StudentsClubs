@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar";
 import ClubCard from "../../components/ClubCard/ClubCard";
+import { Button, Chip } from "../../shared/components";
 import { getClubs, getCategories } from "../../api/clubs";
 import type { Club, ClubFilters } from "../../api/clubs";
 import { getWeather, type Weather } from "../../api/external";
@@ -167,13 +168,13 @@ export default function HomePage() {
 
                 <div className="chips">
                     {categories.map((category, i) => (
-                        <button 
-                            key={i} 
-                            className={`chip ${activeCategory === category ? 'active' : ''}`}
+                        <Chip
+                            key={i}
+                            active={activeCategory === category}
                             onClick={() => setActiveCategory(category)}
                         >
                             {category}
-                        </button>
+                        </Chip>
                     ))}
                 </div>
 
@@ -247,19 +248,19 @@ export default function HomePage() {
 
                         {clubs.length > 0 && (
                             <div className="pagination">
-                                <button className="page-btn" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+                                <Button variant="primary" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
                                     Назад
-                                </button>
+                                </Button>
                                 <span className="page-info">
                                     Страница {page} из {Math.max(1, Math.ceil(total / pageSize))} (всего {total})
                                 </span>
-                                <button
-                                    className="page-btn"
+                                <Button
+                                    variant="primary"
                                     disabled={page >= Math.ceil(total / pageSize)}
                                     onClick={() => setPage((p) => p + 1)}
                                 >
                                     Вперед
-                                </button>
+                                </Button>
                                 <select className="filter-select" value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}>
                                     <option value={6}>6</option>
                                     <option value={12}>12</option>
