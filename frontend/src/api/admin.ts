@@ -20,3 +20,53 @@ export const updateUserRole = async (userId: number, role: string): Promise<User
         body: JSON.stringify({ role }),
     });
 };
+
+export type ClubCategory = {
+    id: number;
+    name: string;
+    sort_order: number;
+};
+
+export type CategoryCreatePayload = {
+    name: string;
+};
+
+export type CategoryUpdatePayload = {
+    name?: string;
+};
+
+export type CategoryReorderPayload = {
+    ordered_ids: number[];
+};
+
+export const getCategories = async (): Promise<ClubCategory[]> => {
+    return apiFetch<ClubCategory[]>(`${API_BASE_URL}/admin/categories`, { method: "GET" });
+};
+
+export const createCategory = async (payload: CategoryCreatePayload): Promise<ClubCategory> => {
+    return apiFetch<ClubCategory>(`${API_BASE_URL}/admin/categories`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+    });
+};
+
+export const updateCategory = async (
+    categoryId: number,
+    payload: CategoryUpdatePayload,
+): Promise<ClubCategory> => {
+    return apiFetch<ClubCategory>(`${API_BASE_URL}/admin/categories/${categoryId}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+    });
+};
+
+export const deleteCategory = async (categoryId: number): Promise<void> => {
+    await apiFetch(`${API_BASE_URL}/admin/categories/${categoryId}`, { method: "DELETE" });
+};
+
+export const reorderCategories = async (payload: CategoryReorderPayload): Promise<ClubCategory[]> => {
+    return apiFetch<ClubCategory[]>(`${API_BASE_URL}/admin/categories/reorder`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+    });
+};

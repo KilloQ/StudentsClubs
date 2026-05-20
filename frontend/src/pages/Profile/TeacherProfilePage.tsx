@@ -107,21 +107,20 @@ export default function TeacherProfilePage() {
             <div className="teacher-profile-content">
                 <h1 className="teacher-profile-title">Профиль преподавателя</h1>
                 <div className="teacher-user-info">
-                    <div className="user-info-text">
-                        <h2 className="teacher-user-name">{profile.full_name}</h2>
-                        <p className="teacher-user-role">Преподаватель</p>
-                        <h3 className="my-clubs-title">Мои кружки</h3>
+                    <h2 className="teacher-user-name">{profile.full_name}</h2>
+                    <p className="teacher-user-role">Преподаватель</p>
+                    <div className="profile-actions">
+                        <button type="button" className="profile-action-button" onClick={handleCreateClubClick}>
+                            Создать кружок
+                        </button>
+                        <button
+                            type="button"
+                            className="profile-action-button"
+                            onClick={() => setIsLogoutModalOpen(true)}
+                        >
+                            Выйти из профиля
+                        </button>
                     </div>
-                    
-                    <button 
-                        className="create-club-button"
-                        onClick={handleCreateClubClick}
-                    >
-                        + Создать кружок
-                    </button>
-                    <button className="logout-profile-button" onClick={() => setIsLogoutModalOpen(true)}>
-                        Выйти из профиля
-                    </button>
                 </div>
 
                 <div className="teacher-stats-grid">
@@ -137,6 +136,7 @@ export default function TeacherProfilePage() {
 
                 {error && <div className="error-message">{error}</div>}
 
+                <h3 className="teacher-section-title">Мои кружки</h3>
                 <div className="teacher-clubs-grid">
                     {profile.clubs.map((club) => (
                         <div key={club.id} className="teacher-club-card">

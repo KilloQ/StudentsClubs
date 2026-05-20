@@ -17,14 +17,6 @@ test.beforeEach(async ({ page }) => {
       }),
     });
   });
-
-  await page.route("**/external/weather?**", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ provider: "openweathermap", city: "Москва", temp_c: 14, feels_like_c: 12, condition: "Ясно" }),
-    });
-  });
 });
 
 test("landing page smoke", async ({ page }) => {
@@ -61,7 +53,7 @@ test("session expiration redirects to login", async ({ page }) => {
 });
 
 test("api failure shows error message", async ({ page }) => {
-  await page.route("**/external/weather?**", async (route) => {
+  await page.route("**/clubs/categories/list", async (route) => {
     await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ detail: "upstream unavailable" }) });
   });
 

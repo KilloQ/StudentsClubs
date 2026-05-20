@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, type FormEvent, type MouseEvent } from "react";
+import { X } from "lucide-react";
 import type { CreateClubRequest } from "../api/clubs";
+import { Button } from "../shared/components";
 import "./CreateClubModal.css";
 
 interface CreateClubModalProps {
@@ -9,97 +11,139 @@ interface CreateClubModalProps {
     categories?: string[];
 }
 
-export default function CreateClubModal({ isOpen, onClose, onCreate, categories = [] }: CreateClubModalProps) {
-    const [formData, setFormData] = useState({
-        title: "",
-        description: "",
-        category: "",
-        maxStudents: ""
-    });
+const emptyForm = {
+    title: "",
+    description: "",
+    category: "",
+    maxStudents: "",
+};
 
-    const handleSubmit = async (e: React.FormEvent) => {
+export default function CreateClubModal({ isOpen, onClose, onCreate, categories = [] }: CreateClubModalProps) {
+    const [formData, setFormData] = useState(emptyForm);
+    const [submitting, setSubmitting] = useState(false);
+
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         const clubData: CreateClubRequest = {
-            title: formData.title,
-            description: formData.description || undefined,
+            title: formData.title.trim(),
+            description: formData.description.trim() || undefined,
             category: formData.category,
-            max_students: parseInt(formData.maxStudents)
+            max_students: parseInt(formData.maxStudents, 10),
         };
-        await onCreate(clubData);
-        setFormData({ title: "", description: "", category: "", maxStudents: "" });
+
+        try {
+            setSubmitting(true);
+            await onCreate(clubData);
+            setFormData(emptyForm);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     const handleClose = () => {
-        setFormData({ title: "", description: "", category: "", maxStudents: "" });
+        setFormData(emptyForm);
         onClose();
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className="modal-overlay">
-            <div className="modal-content">
-                <div className="modal-header">
-                    <h2 className="modal-title">Создать кружок</h2>
-                    <button className="close-button" onClick={handleClose}>×</button>
+        <div className="create-club-modal-overlay" onClick={handleClose}>
+            <div
+                className="create-club-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="create-club-modal-title"
+                onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
+            >
+                <div className="create-club-modal__header">
+                    <h2 id="create-club-modal-title" className="create-club-modal__title">
+                        Создать кружок
+                    </h2>
+                    <button
+                        type="button"
+                        className="create-club-modal__close"
+                        onClick={handleClose}
+                        aria-label="Закрыть"
+                    >
+                        <X size={20} aria-hidden />
+                    </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="modal-form">
-                    <div className="form-group">
-                        <label className="form-label">Название кружка</label>
+                <form onSubmit={handleSubmit} className="create-club-modal__form">
+                    <div className="create-club-modal__field">
+                        <label className="create-club-modal__label" htmlFor="club-title">
+                            Название кружка
+                        </label>
                         <input
+                            id="club-title"
                             type="text"
-                            className="form-input"
+                            className="create-club-modal__input"
                             value={formData.title}
-                            onChange={(e) => setFormData({...formData, title: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            placeholder="Например, Робототехника"
                             required
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label className="form-label">Описание</label>
+                    <div className="create-club-modal__field">
+                        <label className="create-club-modal__label" htmlFor="club-description">
+                            Описание
+                        </label>
                         <textarea
-                            className="form-textarea"
+                            id="club-description"
+                            className="create-club-modal__textarea"
                             value={formData.description}
-                            onChange={(e) => setFormData({...formData, description: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            placeholder="Кратко опишите, чем занимается кружок"
+                            rows={4}
                             required
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label className="form-label">Категория</label>
+                    <div className="create-club-modal__field">
+                        <label className="create-club-modal__label" htmlFor="club-category">
+                            Категория
+                        </label>
                         <select
-                            className="form-select"
+                            id="club-category"
+                            className="create-club-modal__select"
                             value={formData.category}
-                            onChange={(e) => setFormData({...formData, category: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                             required
                         >
                             <option value="">Выберите категорию</option>
-                            {categories.map((category, index) => (
-                                <option key={index} value={category}>{category}</option>
+                            {categories.map((category) => (
+                                <option key={category} value={category}>
+                                    {category}
+                                </option>
                             ))}
                         </select>
                     </div>
 
-                    <div className="form-group">
-                        <label className="form-label">Максимум студентов</label>
+                    <div className="create-club-modal__field">
+                        <label className="create-club-modal__label" htmlFor="club-max-students">
+                            Максимум студентов
+                        </label>
                         <input
+                            id="club-max-students"
                             type="number"
-                            className="form-input"
+                            className="create-club-modal__input"
                             value={formData.maxStudents}
-                            onChange={(e) => setFormData({...formData, maxStudents: e.target.value})}
-                            min="1"
+                            onChange={(e) => setFormData({ ...formData, maxStudents: e.target.value })}
+                            min={1}
+                            placeholder="20"
                             required
                         />
                     </div>
 
-                    <div className="modal-actions">
-                        <button type="button" className="cancel-button" onClick={handleClose}>
+                    <div className="create-club-modal__actions">
+                        <Button type="button" variant="secondary" onClick={handleClose} disabled={submitting}>
                             Отмена
-                        </button>
-                        <button type="submit" className="create-button">
-                            Создать
-                        </button>
+                        </Button>
+                        <Button type="submit" variant="primary" disabled={submitting}>
+                            {submitting ? "Создание..." : "Создать"}
+                        </Button>
                     </div>
                 </form>
             </div>

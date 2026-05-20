@@ -22,6 +22,14 @@ class User(Base):
     attendances = relationship("Attendance", back_populates="student")
 
 
+class ClubCategory(Base):
+    __tablename__ = "club_categories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(80), unique=True, nullable=False, index=True)
+    sort_order = Column(Integer, default=0, nullable=False)
+
+
 class Club(Base):
     __tablename__ = "clubs"
 

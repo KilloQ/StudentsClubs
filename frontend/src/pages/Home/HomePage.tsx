@@ -5,7 +5,6 @@ import ClubCard from "../../components/ClubCard/ClubCard";
 import { Button, Chip } from "../../shared/components";
 import { getClubs, getCategories } from "../../api/clubs";
 import type { Club, ClubFilters } from "../../api/clubs";
-import { getWeather, type Weather } from "../../api/external";
 import { Seo } from "../../seo/seo";
 import { getErrorMessage } from "../../utils/errors";
 import "./HomePage.css";
@@ -25,9 +24,6 @@ export default function HomePage() {
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [weather, setWeather] = useState<Weather | null>(null);
-    const [weatherLoading, setWeatherLoading] = useState(false);
-    const [weatherError, setWeatherError] = useState("");
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -90,16 +86,6 @@ export default function HomePage() {
     }, [loadData]);
 
     useEffect(() => {
-        const city = "Москва";
-        setWeatherLoading(true);
-        setWeatherError("");
-        getWeather(city)
-            .then(setWeather)
-            .catch((e: unknown) => setWeatherError(getErrorMessage(e, "Погода недоступна")))
-            .finally(() => setWeatherLoading(false));
-    }, []);
-
-    useEffect(() => {
         loadClubs();
     }, [loadClubs]);
 
@@ -109,7 +95,7 @@ export default function HomePage() {
             sort_by: sortBy,
             sort_order: sortOrder,
             page: String(page),
-            page_size: String(pageSize),
+            page_size: String(24),
         };
         if (search.trim()) params.search = search.trim();
         if (recruitmentOpenOnly) params.recruitment_open = "true";
@@ -142,30 +128,7 @@ export default function HomePage() {
             <Navbar />
 
             <div className="home-container">
-                <h1>Каталог кружков</h1>
-                <h2>Направление кружка:</h2>
-
-                <section aria-label="Погода" style={{ marginBottom: 16 }}>
-                    <h3>Погода в Москве</h3>
-                    {weatherLoading ? (
-                        <div className="loading-message">Загрузка погоды...</div>
-                    ) : weatherError ? (
-                        <div className="error-message">{weatherError}</div>
-                    ) : weather ? (
-                        <div>
-                            <div>{weather.condition || "—"}</div>
-                            <div>
-                                {typeof weather.temp_c === "number" ? `${Math.round(weather.temp_c)}°C` : "—"}
-                                {typeof weather.feels_like_c === "number"
-                                    ? ` (ощущается как ${Math.round(weather.feels_like_c)}°C)`
-                                    : ""}
-                            </div>
-                        </div>
-                    ) : (
-                        <div>Нет данных</div>
-                    )}
-                </section>
-
+                <h1 style={{ marginBottom: "24px" }}>Каталог кружков</h1>
                 <div className="chips">
                     {categories.map((category, i) => (
                         <Chip
@@ -261,11 +224,6 @@ export default function HomePage() {
                                 >
                                     Вперед
                                 </Button>
-                                <select className="filter-select" value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}>
-                                    <option value={6}>6</option>
-                                    <option value={12}>12</option>
-                                    <option value={24}>24</option>
-                                </select>
                             </div>
                         )}
                     </>

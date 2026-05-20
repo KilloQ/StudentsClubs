@@ -35,16 +35,31 @@
     padding: 30px 60px 60px 60px;
 }
 
-.logout-profile-button {
+.profile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
     margin-top: 16px;
-    margin-left: 16px;
+}
+
+.profile-action-button {
     border: none;
     background: #d93025;
     color: #ffffff;
     border-radius: 24px;
-    padding: 10px 14px;
+    padding: 10px 18px;
     font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.profile-action-button:hover {
+    background: #b82820;
+}
+
+.profile-action-button:active {
+    transform: translateY(1px);
 }
 
 .user-info {

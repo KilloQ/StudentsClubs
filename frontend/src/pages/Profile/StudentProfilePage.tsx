@@ -72,9 +72,15 @@ export default function StudentProfilePage() {
                 <div className="user-info">
                     <h2 className="user-name">{profile.full_name}</h2>
                     <p className="user-role">Студент</p>
-                    <button className="logout-profile-button" onClick={() => setIsLogoutModalOpen(true)}>
-                        Выйти из профиля
-                    </button>
+                    <div className="profile-actions">
+                        <button
+                            type="button"
+                            className="profile-action-button"
+                            onClick={() => setIsLogoutModalOpen(true)}
+                        >
+                            Выйти из профиля
+                        </button>
+                    </div>
                 </div>
 
                 <div className="stats-grid">

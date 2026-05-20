@@ -23,6 +23,7 @@ from app.api.auth import get_current_user, get_current_user_optional
 from app.core.permissions import require_permission, Permission
 from app.core.config import settings
 from app.services.storage_service import StorageService
+from app.services.club_category_service import list_category_names, ensure_category_exists
 
 router = APIRouter()
 _storage: Optional[StorageService] = None
@@ -190,7 +191,8 @@ async def create_club(
     current_user: User = Depends(require_permission(Permission.CLUB_CREATE)),
     db: AsyncSession = Depends(get_db)
 ):
-    
+    await ensure_category_exists(db, club_data.category)
+
     new_club = Club(
         title=club_data.title,
         description=club_data.description,
@@ -224,6 +226,9 @@ async def update_club(
 
     if current_user.role != "admin" and club.owner_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Недостаточно прав")
+
+    if club_data.category is not None:
+        await ensure_category_exists(db, club_data.category)
 
     for field in ("title", "description", "category", "image_url", "max_students", "recruitment_open"):
         value = getattr(club_data, field)
@@ -478,12 +483,5 @@ async def delete_file(
 
 
 @router.get("/categories/list", response_model=List[str])
-async def get_categories():
-    return [
-        "Все",
-        "Творчество",
-        "Активные виды спорта",
-        "Командные игры",
-        "Нагрузки высокой интенсивности",
-        "Нагрузки низкой интенсивности",
-    ]
+async def get_categories(db: AsyncSession = Depends(get_db)):
+    return await list_category_names(db)

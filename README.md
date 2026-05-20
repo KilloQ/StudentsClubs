@@ -139,11 +139,16 @@ StudentsClubs/
 - `GET /clubs/{club_id}` - Детали кружка
 - `POST /clubs/` - Создать кружок (только для преподавателей)
 - `POST /clubs/{club_id}/join` - Записаться на кружок
-- `GET /clubs/categories/list` - Список категорий
+- `GET /clubs/categories/list` - Список категорий (из БД, с пунктом «Все»)
 
 ### Администратор (RBAC)
 - `GET /admin/users` - Список пользователей (только admin)
 - `PUT /admin/users/{user_id}/role` - Изменить роль пользователя (только admin)
+- `GET /admin/categories` - Список направлений каталога (только admin)
+- `POST /admin/categories` - Добавить направление (только admin)
+- `PUT /admin/categories/reorder` - Изменить порядок направлений (только admin)
+- `PUT /admin/categories/{category_id}` - Изменить направление (только admin)
+- `DELETE /admin/categories/{category_id}` - Удалить направление, если нет привязанных кружков (только admin)
 
 ### Профиль
 - `GET /profile/student` - Профиль студента

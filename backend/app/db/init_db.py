@@ -2,7 +2,7 @@ import asyncio
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from app.db.models import Base, User
+from app.db.models import Base, User, ClubCategory
 from app.api.auth import get_password_hash
 from app.core.config import settings
 
@@ -73,6 +73,19 @@ async def init_db():
                 print("Роль admin установлена для существующего admin")
             else:
                 print("Администратор уже существует")
+
+        default_categories = [
+            ("Творчество", 1),
+            ("Активные виды спорта", 2),
+            ("Командные игры", 3),
+            ("Нагрузки высокой интенсивности", 4),
+            ("Нагрузки низкой интенсивности", 5),
+        ]
+        for name, sort_order in default_categories:
+            exists = await session.execute(select(ClubCategory).where(ClubCategory.name == name))
+            if exists.scalar_one_or_none() is None:
+                session.add(ClubCategory(name=name, sort_order=sort_order))
+        await session.commit()
 
     await engine.dispose()
 
