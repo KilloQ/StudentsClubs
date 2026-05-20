@@ -1,16 +1,9 @@
-# syntax=docker/dockerfile:1
-FROM node:20-bookworm-slim AS build
+FROM node:20-alpine AS build
 WORKDIR /app
 
-COPY frontend/package.json frontend/package-lock.json frontend/.npmrc ./
-
-RUN --mount=type=cache,target=/root/.npm \
-    for attempt in 1 2 3 4 5; do \
-      npm ci && exit 0; \
-      echo "npm ci failed (attempt ${attempt}/5), retrying..."; \
-      sleep 15; \
-    done; \
-    exit 1
+COPY frontend/package.json frontend/package-lock.json* ./
+COPY frontend/tsconfig.json frontend/vite.config.ts ./
+RUN npm install
 
 COPY frontend /app
 RUN npm run build
