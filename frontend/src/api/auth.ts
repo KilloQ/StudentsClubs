@@ -1,6 +1,5 @@
+import { API_BASE_URL } from "./config";
 import { apiFetch } from "./httpClient";
-
-const API_BASE_URL = "http://localhost:8000";
 
 export type LoginRequest = {
     username: string;
