@@ -34,7 +34,7 @@ services:
       - backend/.env
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/students_clubs
-      - PUBLIC_API_BASE_URL=${PUBLIC_API_BASE_URL:-}
+      - PUBLIC_API_BASE_URL=${PUBLIC_API_BASE_URL:-/api}
       - PUBLIC_SITE_URL=${PUBLIC_SITE_URL:-}
     depends_on:
       postgres:
@@ -52,7 +52,7 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
     ports:
       - "80:80"
     depends_on:
