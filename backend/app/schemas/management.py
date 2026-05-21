@@ -14,6 +14,24 @@ class StudentAttendanceInfo(BaseModel):
 class MarkAttendanceRequest(BaseModel):
     student_id: int
     date: date
+    schedule_id: Optional[int] = None
+
+
+class AttendanceByDateResponse(BaseModel):
+    date: date
+    schedule_id: Optional[int] = None
+    student_ids: List[int]
+
+
+class BulkMarkAttendanceRequest(BaseModel):
+    date: date
+    student_ids: List[int]
+    schedule_id: Optional[int] = None
+
+
+class BulkMarkAttendanceResponse(BaseModel):
+    marked_count: int
+    skipped_count: int
 
 
 class ClubSettingsUpdate(BaseModel):

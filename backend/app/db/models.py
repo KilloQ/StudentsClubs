@@ -58,8 +58,8 @@ class Schedule(Base):
     start_time = Column(Time, nullable=False)
     location = Column(String, nullable=False)
 
-
     club = relationship("Club", back_populates="schedules")
+    attendances = relationship("Attendance", back_populates="schedule")
 
 
 class ClubMembership(Base):
@@ -81,12 +81,13 @@ class Attendance(Base):
     id = Column(Integer, primary_key=True, index=True)
     club_id = Column(Integer, ForeignKey("clubs.id"), nullable=False)
     student_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    schedule_id = Column(Integer, ForeignKey("schedules.id", ondelete="SET NULL"), nullable=True)
     date = Column(Date, nullable=False)
     marked_at = Column(Date, default=datetime.now().date(), nullable=False)
 
-
     club = relationship("Club", back_populates="attendances")
     student = relationship("User", back_populates="attendances")
+    schedule = relationship("Schedule", back_populates="attendances")
 
 
 class RefreshToken(Base):

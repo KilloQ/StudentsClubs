@@ -29,6 +29,7 @@ import {
     type ClubCategory,
 } from "../../api/admin";
 import { getErrorMessage } from "../../utils/errors";
+import { useToast } from "../../contexts/useToast";
 import AdminCollapsibleSection from "./AdminCollapsibleSection";
 import AdminSortableCategoryItem from "./AdminSortableCategoryItem";
 import "./AdminProfilePage.css";
@@ -42,6 +43,7 @@ const ROLE_LABELS: Record<string, string> = {
 export default function AdminProfilePage() {
     const navigate = useNavigate();
     const { user: currentUser, logout } = useAuth();
+    const { showToast } = useToast();
     const [users, setUsers] = useState<UserAdmin[]>([]);
     const [categories, setCategories] = useState<ClubCategory[]>([]);
     const [loading, setLoading] = useState(true);
@@ -103,8 +105,11 @@ export default function AdminProfilePage() {
             setError("");
             await updateUserRole(userId, newRole);
             await loadUsers();
+            showToast("Роль пользователя обновлена");
         } catch (err: unknown) {
-            setError(getErrorMessage(err, "Ошибка изменения роли"));
+            const message = getErrorMessage(err, "Ошибка изменения роли");
+            setError(message);
+            showToast(message, "error");
         } finally {
             setChangingId(null);
         }
@@ -121,8 +126,11 @@ export default function AdminProfilePage() {
             await createCategory({ name });
             setNewCategoryName("");
             await loadCategories();
+            showToast(`Направление «${name}» создано`);
         } catch (err: unknown) {
-            setError(getErrorMessage(err, "Ошибка создания категории"));
+            const message = getErrorMessage(err, "Ошибка создания категории");
+            setError(message);
+            showToast(message, "error");
         } finally {
             setIsCreatingCategory(false);
         }
@@ -137,8 +145,11 @@ export default function AdminProfilePage() {
             setError("");
             await updateCategory(categoryId, { name });
             await loadCategories();
+            showToast(`Направление «${name}» сохранено`);
         } catch (err: unknown) {
-            setError(getErrorMessage(err, "Ошибка сохранения категории"));
+            const message = getErrorMessage(err, "Ошибка сохранения категории");
+            setError(message);
+            showToast(message, "error");
         } finally {
             setCategorySavingId(null);
         }
@@ -154,8 +165,11 @@ export default function AdminProfilePage() {
             setError("");
             await deleteCategory(categoryId);
             await loadCategories();
+            showToast(`Направление «${category.name}» удалено`);
         } catch (err: unknown) {
-            setError(getErrorMessage(err, "Ошибка удаления категории"));
+            const message = getErrorMessage(err, "Ошибка удаления категории");
+            setError(message);
+            showToast(message, "error");
         } finally {
             setCategoryDeletingId(null);
         }
@@ -178,8 +192,11 @@ export default function AdminProfilePage() {
             const saved = await reorderCategories({ ordered_ids: reordered.map((c) => c.id) });
             setCategories(saved);
             syncNameDrafts(saved);
+            showToast("Порядок направлений сохранён");
         } catch (err: unknown) {
-            setError(getErrorMessage(err, "Ошибка изменения порядка"));
+            const message = getErrorMessage(err, "Ошибка изменения порядка");
+            setError(message);
+            showToast(message, "error");
             await loadCategories();
         } finally {
             setIsReorderingCategories(false);

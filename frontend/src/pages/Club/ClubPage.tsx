@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, type ChangeEvent } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar";
 import { deleteClubFile, getClub, getClubFileDownloadUrl, getClubFiles, joinClub, leaveClub, uploadClubFile } from "../../api/clubs";
@@ -7,13 +7,16 @@ import { getAnnouncements, likeAnnouncement, unlikeAnnouncement, type Announceme
 import { useAuth } from "../../contexts/useAuth";
 import { canJoinOrLeaveClub, canManageClubs } from "../../utils/permissions";
 import { Seo } from "../../seo/seo";
+import { FileInput } from "../../shared/components";
 import { getErrorMessage } from "../../utils/errors";
+import { useToast } from "../../contexts/useToast";
 import "./ClubPage.css";
 
 export default function ClubPage() {
     const navigate = useNavigate();
     const { clubId } = useParams();
     const { user } = useAuth();
+    const { showToast } = useToast();
     const [clubData, setClubData] = useState<ClubDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -83,21 +86,22 @@ export default function ClubPage() {
         }
     };
 
-    const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-        if (!clubId || !event.target.files?.length) return;
+    const handleFileUpload = async (file: File) => {
+        if (!clubId) return;
 
-        const file = event.target.files[0];
         const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
         const maxSizeBytes = 5 * 1024 * 1024;
 
         if (!allowedTypes.includes(file.type)) {
-            setError("Разрешены только JPG, PNG и PDF");
-            event.target.value = "";
+            const message = "Разрешены только JPG, PNG и PDF";
+            setError(message);
+            showToast(message, "error");
             return;
         }
         if (file.size > maxSizeBytes) {
-            setError("Файл слишком большой (максимум 5 МБ)");
-            event.target.value = "";
+            const message = "Файл слишком большой (максимум 5 МБ)";
+            setError(message);
+            showToast(message, "error");
             return;
         }
 
@@ -107,11 +111,13 @@ export default function ClubPage() {
             await uploadClubFile(Number(clubId), file);
             const fileList = await getClubFiles(Number(clubId));
             setFiles(fileList);
+            showToast(`Файл «${file.name}» загружен`);
         } catch (err: unknown) {
-            setError(getErrorMessage(err, "Ошибка загрузки файла"));
+            const message = getErrorMessage(err, "Ошибка загрузки файла");
+            setError(message);
+            showToast(message, "error");
         } finally {
             setUploading(false);
-            event.target.value = "";
         }
     };
 
@@ -303,10 +309,14 @@ export default function ClubPage() {
                                 <div className="file-empty">Войдите, чтобы увидеть файлы кружка</div>
                             ) : null}
                             {canManageClubs(user) && (
-                                <div className="file-upload-row">
-                                    <input type="file" onChange={handleFileUpload} disabled={uploading} />
-                                    {uploading && <span className="uploading-label">Загрузка...</span>}
-                                </div>
+                                <FileInput
+                                    label="Добавить файл"
+                                    accept="image/jpeg,image/png,application/pdf"
+                                    onChange={(file) => file && void handleFileUpload(file)}
+                                    disabled={uploading}
+                                    hint="JPG, PNG или PDF, до 5 МБ"
+                                    buttonText={uploading ? "Загрузка..." : "Загрузить файл"}
+                                />
                             )}
                             <div className="files-list">
                                 {files.length === 0 ? (

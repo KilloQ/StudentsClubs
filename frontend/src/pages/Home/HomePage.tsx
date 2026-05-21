@@ -12,7 +12,9 @@ import "./HomePage.css";
 export default function HomePage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const [activeCategory, setActiveCategory] = useState("Все");
-    const [search, setSearch] = useState("");
+    const [searchInput, setSearchInput] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const skipSearchPageReset = useRef(true);
     const [recruitmentOpenOnly, setRecruitmentOpenOnly] = useState(false);
     const [minMaxStudents, setMinMaxStudents] = useState("");
     const [sortBy, setSortBy] = useState<"id" | "title" | "category" | "max_students">("id");
@@ -37,7 +39,10 @@ export default function HomePage() {
         const qPageSize = searchParams.get("page_size");
 
         if (qCategory) setActiveCategory(qCategory);
-        if (qSearch) setSearch(qSearch);
+        if (qSearch) {
+            setSearchInput(qSearch);
+            setDebouncedSearch(qSearch);
+        }
         if (qRecruitment) setRecruitmentOpenOnly(qRecruitment === "true");
         if (qMinMax) setMinMaxStudents(qMinMax);
         if (qSortBy === "id" || qSortBy === "title" || qSortBy === "category" || qSortBy === "max_students") setSortBy(qSortBy);
@@ -60,7 +65,7 @@ export default function HomePage() {
         try {
             const filters: ClubFilters = {
                 category: activeCategory === "Все" ? undefined : activeCategory,
-                search: search.trim() || undefined,
+                search: debouncedSearch.trim() || undefined,
                 recruitment_open: recruitmentOpenOnly ? true : undefined,
                 min_max_students: minMaxStudents ? Number(minMaxStudents) : undefined,
                 sort_by: sortBy,
@@ -76,7 +81,22 @@ export default function HomePage() {
         } finally {
             setLoading(false);
         }
-    }, [activeCategory, search, recruitmentOpenOnly, minMaxStudents, sortBy, sortOrder, page, pageSize]);
+    }, [activeCategory, debouncedSearch, recruitmentOpenOnly, minMaxStudents, sortBy, sortOrder, page, pageSize]);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            setDebouncedSearch(searchInput);
+        }, 400);
+        return () => window.clearTimeout(timer);
+    }, [searchInput]);
+
+    useEffect(() => {
+        if (skipSearchPageReset.current) {
+            skipSearchPageReset.current = false;
+            return;
+        }
+        setPage(1);
+    }, [debouncedSearch]);
 
     const didInit = useRef(false);
     useEffect(() => {
@@ -97,11 +117,11 @@ export default function HomePage() {
             page: String(page),
             page_size: String(24),
         };
-        if (search.trim()) params.search = search.trim();
+        if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
         if (recruitmentOpenOnly) params.recruitment_open = "true";
         if (minMaxStudents) params.min_max_students = minMaxStudents;
         setSearchParams(params, { replace: true });
-    }, [activeCategory, search, recruitmentOpenOnly, minMaxStudents, sortBy, sortOrder, page, pageSize, setSearchParams]);
+    }, [activeCategory, debouncedSearch, recruitmentOpenOnly, minMaxStudents, sortBy, sortOrder, page, pageSize, setSearchParams]);
 
 
 
@@ -145,11 +165,8 @@ export default function HomePage() {
                     <input
                         className="filter-input"
                         placeholder="Поиск по названию, описанию, категории"
-                        value={search}
-                        onChange={(e) => {
-                            setSearch(e.target.value);
-                            setPage(1);
-                        }}
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
                     />
                     <input
                         className="filter-input filter-small"

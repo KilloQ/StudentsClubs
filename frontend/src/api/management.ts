@@ -13,6 +13,24 @@ export interface StudentAttendanceInfo {
 export interface MarkAttendanceRequest {
     student_id: number;
     date: string;
+    schedule_id?: number | null;
+}
+
+export interface AttendanceByDateResponse {
+    date: string;
+    schedule_id?: number | null;
+    student_ids: number[];
+}
+
+export interface BulkMarkAttendanceRequest {
+    date: string;
+    student_ids: number[];
+    schedule_id?: number | null;
+}
+
+export interface BulkMarkAttendanceResponse {
+    marked_count: number;
+    skipped_count: number;
 }
 
 export interface ClubSettings {
@@ -46,11 +64,39 @@ export const getClubStudents = async (clubId: number): Promise<StudentAttendance
     return apiFetch<StudentAttendanceInfo[]>(`${API_BASE_URL}/management/${clubId}/students`, { method: "GET" });
 };
 
+export const getAttendanceByDate = async (
+    clubId: number,
+    date: string,
+    scheduleId?: number | null,
+): Promise<AttendanceByDateResponse> => {
+    const params = new URLSearchParams({ date });
+    if (scheduleId != null) {
+        params.set("schedule_id", String(scheduleId));
+    }
+    return apiFetch<AttendanceByDateResponse>(
+        `${API_BASE_URL}/management/${clubId}/attendance?${params}`,
+        { method: "GET" },
+    );
+};
+
 export const markAttendance = async (clubId: number, data: MarkAttendanceRequest): Promise<void> => {
     await apiFetch(`${API_BASE_URL}/management/${clubId}/attendance`, {
         method: "POST",
         body: JSON.stringify(data),
     });
+};
+
+export const markAttendanceBulk = async (
+    clubId: number,
+    data: BulkMarkAttendanceRequest,
+): Promise<BulkMarkAttendanceResponse> => {
+    return apiFetch<BulkMarkAttendanceResponse>(
+        `${API_BASE_URL}/management/${clubId}/attendance/bulk`,
+        {
+            method: "POST",
+            body: JSON.stringify(data),
+        },
+    );
 };
 
 export const getClubSettings = async (clubId: number): Promise<ClubSettings> => {

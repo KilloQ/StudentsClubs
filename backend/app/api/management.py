@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 from typing import List
@@ -8,8 +8,13 @@ from datetime import date, time
 from app.db.database import get_db
 from app.db.models import Club, User, ClubMembership, Attendance, Schedule
 from app.schemas.management import (
-    StudentAttendanceInfo, MarkAttendanceRequest,
-    ClubSettingsUpdate, ScheduleItemCreate
+    StudentAttendanceInfo,
+    MarkAttendanceRequest,
+    AttendanceByDateResponse,
+    BulkMarkAttendanceRequest,
+    BulkMarkAttendanceResponse,
+    ClubSettingsUpdate,
+    ScheduleItemCreate,
 )
 from app.api.auth import get_current_user
 from app.core.permissions import is_admin, require_teacher
@@ -53,6 +58,62 @@ async def verify_club_owner_or_admin(club_id: int, user: User, db: AsyncSession)
             detail="Вы не являетесь владельцем этого кружка"
         )
     return club
+
+
+async def verify_schedule_for_club(
+    club_id: int,
+    schedule_id: int,
+    db: AsyncSession,
+) -> Schedule:
+    result = await db.execute(
+        select(Schedule).where(
+            and_(
+                Schedule.id == schedule_id,
+                Schedule.club_id == club_id,
+            )
+        )
+    )
+    schedule = result.scalar_one_or_none()
+    if not schedule:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Занятие не найдено в расписании кружка",
+        )
+    return schedule
+
+
+def attendance_match_conditions(
+    club_id: int,
+    student_id: int,
+    class_date: date,
+    schedule_id: Optional[int],
+):
+    conditions = [
+        Attendance.club_id == club_id,
+        Attendance.student_id == student_id,
+        Attendance.date == class_date,
+    ]
+    if schedule_id is not None:
+        conditions.append(Attendance.schedule_id == schedule_id)
+    else:
+        conditions.append(Attendance.schedule_id.is_(None))
+    return and_(*conditions)
+
+
+def attendance_list_conditions(
+    club_id: int,
+    class_date: date,
+    schedule_id: Optional[int],
+):
+    conditions = [
+        Attendance.club_id == club_id,
+        Attendance.date == class_date,
+    ]
+    if schedule_id is not None:
+        conditions.append(Attendance.schedule_id == schedule_id)
+    else:
+        conditions.append(Attendance.schedule_id.is_(None))
+    return and_(*conditions)
 
 
 @router.get("/{club_id}/students", response_model=List[StudentAttendanceInfo])
@@ -106,6 +167,100 @@ async def get_club_students(
     return students_info
 
 
+@router.get("/{club_id}/attendance", response_model=AttendanceByDateResponse)
+async def get_attendance_by_date(
+    club_id: int,
+    class_date: date = Query(..., alias="date"),
+    schedule_id: Optional[int] = Query(None),
+    current_user: User = Depends(require_teacher),
+    db: AsyncSession = Depends(get_db),
+):
+    await verify_club_owner_or_admin(club_id, current_user, db)
+
+    if schedule_id is not None:
+        await verify_schedule_for_club(club_id, schedule_id, db)
+
+    result = await db.execute(
+        select(Attendance.student_id).where(
+            attendance_list_conditions(club_id, class_date, schedule_id)
+        )
+    )
+    student_ids = list(result.scalars().all())
+
+    return AttendanceByDateResponse(
+        date=class_date,
+        schedule_id=schedule_id,
+        student_ids=student_ids,
+    )
+
+
+@router.post("/{club_id}/attendance/bulk", response_model=BulkMarkAttendanceResponse)
+async def mark_attendance_bulk(
+    club_id: int,
+    attendance_data: BulkMarkAttendanceRequest,
+    current_user: User = Depends(require_teacher),
+    db: AsyncSession = Depends(get_db),
+):
+    await verify_club_owner_or_admin(club_id, current_user, db)
+
+    schedule_id = attendance_data.schedule_id
+    if schedule_id is not None:
+        await verify_schedule_for_club(club_id, schedule_id, db)
+
+    if not attendance_data.student_ids:
+        return BulkMarkAttendanceResponse(marked_count=0, skipped_count=0)
+
+    unique_student_ids = list(dict.fromkeys(attendance_data.student_ids))
+    marked_count = 0
+    skipped_count = 0
+
+    for student_id in unique_student_ids:
+        membership_result = await db.execute(
+            select(ClubMembership).where(
+                and_(
+                    ClubMembership.club_id == club_id,
+                    ClubMembership.student_id == student_id,
+                )
+            )
+        )
+        if not membership_result.scalar_one_or_none():
+            skipped_count += 1
+            continue
+
+        existing_attendance = await db.execute(
+            select(Attendance).where(
+                attendance_match_conditions(
+                    club_id,
+                    student_id,
+                    attendance_data.date,
+                    schedule_id,
+                )
+            )
+        )
+        if existing_attendance.scalar_one_or_none():
+            skipped_count += 1
+            continue
+
+        db.add(
+            Attendance(
+                club_id=club_id,
+                student_id=student_id,
+                schedule_id=schedule_id,
+                date=attendance_data.date,
+                marked_at=date.today(),
+            )
+        )
+        marked_count += 1
+
+    if marked_count > 0:
+        await db.commit()
+
+    return BulkMarkAttendanceResponse(
+        marked_count=marked_count,
+        skipped_count=skipped_count,
+    )
+
+
 @router.post("/{club_id}/attendance")
 async def mark_attendance(
     club_id: int,
@@ -114,8 +269,11 @@ async def mark_attendance(
     db: AsyncSession = Depends(get_db)
 ):
     await verify_club_owner_or_admin(club_id, current_user, db)
-    
-    # Проверяем, что студент состоит в кружке
+
+    schedule_id = attendance_data.schedule_id
+    if schedule_id is not None:
+        await verify_schedule_for_club(club_id, schedule_id, db)
+
     membership_result = await db.execute(
         select(ClubMembership).where(
             and_(
@@ -125,33 +283,33 @@ async def mark_attendance(
         )
     )
     membership = membership_result.scalar_one_or_none()
-    
+
     if not membership:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Студент не состоит в этом кружке"
         )
-    
-    # Проверяем, не отмечено ли уже посещение на эту дату
+
     existing_attendance = await db.execute(
         select(Attendance).where(
-            and_(
-                Attendance.club_id == club_id,
-                Attendance.student_id == attendance_data.student_id,
-                Attendance.date == attendance_data.date
+            attendance_match_conditions(
+                club_id,
+                attendance_data.student_id,
+                attendance_data.date,
+                schedule_id,
             )
         )
     )
     if existing_attendance.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Посещаемость на эту дату уже отмечена"
+            detail="Посещаемость на это занятие уже отмечена"
         )
-    
-    # Создаем запись о посещении
+
     new_attendance = Attendance(
         club_id=club_id,
         student_id=attendance_data.student_id,
+        schedule_id=schedule_id,
         date=attendance_data.date,
         marked_at=date.today()
     )

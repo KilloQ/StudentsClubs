@@ -26,6 +26,14 @@ async def init_db():
         await conn.execute(text("""
             UPDATE users SET role = 'teacher' WHERE is_teacher = true AND (role IS NULL OR role = 'student')
         """))
+        try:
+            await conn.execute(text("""
+                ALTER TABLE attendances
+                ADD COLUMN IF NOT EXISTS schedule_id INTEGER
+                REFERENCES schedules(id) ON DELETE SET NULL
+            """))
+        except Exception as e:
+            print(f"Миграция schedule_id (возможно, колонка уже есть): {e}")
 
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 

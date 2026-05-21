@@ -8,11 +8,13 @@ import { createClub, getCategories } from "../../api/clubs";
 import type { CreateClubRequest } from "../../api/clubs";
 import { getErrorMessage } from "../../utils/errors";
 import { useAuth } from "../../contexts/useAuth";
+import { useToast } from "../../contexts/useToast";
 import "./TeacherProfilePage.css";
 
 export default function TeacherProfilePage() {
     const navigate = useNavigate();
     const { logout } = useAuth();
+    const { showToast } = useToast();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [profile, setProfile] = useState<TeacherProfile | null>(null);
     const [loading, setLoading] = useState(true);
@@ -60,11 +62,14 @@ export default function TeacherProfilePage() {
 
     const handleCreateClub = async (clubData: CreateClubRequest) => {
         try {
-            await createClub(clubData);
+            const created = await createClub(clubData);
             setIsModalOpen(false);
-            await loadProfile(); // Обновляем профиль
+            await loadProfile();
+            showToast(`Кружок «${created.title}» создан`);
         } catch (err: unknown) {
-            setError(getErrorMessage(err, "Ошибка создания кружка"));
+            const message = getErrorMessage(err, "Ошибка создания кружка");
+            setError(message);
+            showToast(message, "error");
         }
     };
 
@@ -110,12 +115,16 @@ export default function TeacherProfilePage() {
                     <h2 className="teacher-user-name">{profile.full_name}</h2>
                     <p className="teacher-user-role">Преподаватель</p>
                     <div className="profile-actions">
-                        <button type="button" className="profile-action-button" onClick={handleCreateClubClick}>
+                        <button
+                            type="button"
+                            className="profile-action-button profile-action-button--create"
+                            onClick={handleCreateClubClick}
+                        >
                             Создать кружок
                         </button>
                         <button
                             type="button"
-                            className="profile-action-button"
+                            className="profile-action-button profile-action-button--logout"
                             onClick={() => setIsLogoutModalOpen(true)}
                         >
                             Выйти из профиля

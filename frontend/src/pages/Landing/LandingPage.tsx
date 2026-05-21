@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import LandingHeader from "../../components/LandingHeader/LandingHeader";
 import { Button, Logo } from "../../shared/components";
+import { useAuth } from "../../contexts/useAuth";
 import { Seo } from "../../seo/seo";
 import "./LandingPage.css";
 
@@ -91,7 +92,15 @@ const participants = [
 
 export default function LandingPage() {
     const navigate = useNavigate();
+    const { isAuthenticated, user } = useAuth();
     const siteUrl = import.meta.env.VITE_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
+
+    const profilePath =
+        user?.role === "admin"
+            ? "/account/admin"
+            : user?.is_teacher
+              ? "/account/teacher"
+              : "/account/profile";
     const canonicalUrl = siteUrl ? `${siteUrl}/` : undefined;
 
     return (
@@ -129,9 +138,11 @@ export default function LandingPage() {
                             <Button variant="primary" size="lg" icon={<ArrowRight size={18} aria-hidden />} onClick={() => navigate("/clubs")}>
                                 Секции с набором
                             </Button>
-                            <Button variant="ghost" size="lg" onClick={() => navigate("/register")}>
-                                Регистрация
-                            </Button>
+                            {!isAuthenticated && (
+                                <Button variant="ghost" size="lg" onClick={() => navigate("/register")}>
+                                    Регистрация
+                                </Button>
+                            )}
                         </div>
                         <dl className="landing-stats" aria-label="Направления работы клуба">
                             <div>
@@ -219,19 +230,26 @@ export default function LandingPage() {
                             новости собраны здесь, чтобы про спорт в МТУСИ было проще узнать и присоединиться.
                         </p>
                         <div className="landing-staff-notes">
-                            {participants.map((item) => (
-                                <article key={item.tag} className="landing-staff-card">
-                                    <span className="landing-staff-tag">{item.tag}</span>
-                                    <p>{item.text}</p>
-                                    <Button
-                                        variant="link"
-                                        icon={<ArrowRight size={14} aria-hidden />}
-                                        onClick={() => navigate(item.path)}
-                                    >
-                                        {item.cta}
-                                    </Button>
-                                </article>
-                            ))}
+                            {participants.map((item) => {
+                                const actionPath =
+                                    isAuthenticated && item.path === "/login" ? profilePath : item.path;
+                                const actionCta =
+                                    isAuthenticated && item.path === "/login" ? "Профиль" : item.cta;
+
+                                return (
+                                    <article key={item.tag} className="landing-staff-card">
+                                        <span className="landing-staff-tag">{item.tag}</span>
+                                        <p>{item.text}</p>
+                                        <Button
+                                            variant="link"
+                                            icon={<ArrowRight size={14} aria-hidden />}
+                                            onClick={() => navigate(actionPath)}
+                                        >
+                                            {actionCta}
+                                        </Button>
+                                    </article>
+                                );
+                            })}
                         </div>
                     </div>
                 </section>
@@ -298,9 +316,11 @@ export default function LandingPage() {
                             <Button variant="primary" size="lg" onClick={() => navigate("/clubs")}>
                                 Смотреть секции
                             </Button>
-                            <Button variant="ghost" size="lg" onClick={() => navigate("/register")}>
-                                Регистрация
-                            </Button>
+                            {!isAuthenticated && (
+                                <Button variant="ghost" size="lg" onClick={() => navigate("/register")}>
+                                    Регистрация
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </section>
@@ -323,12 +343,16 @@ export default function LandingPage() {
                             >
                                 ВКонтакте
                             </a>
-                            <Button variant="footer" onClick={() => navigate("/login")}>
-                                Вход
-                            </Button>
-                            <Button variant="footer" onClick={() => navigate("/register")}>
-                                Регистрация
-                            </Button>
+                            {!isAuthenticated && (
+                                <>
+                                    <Button variant="footer" onClick={() => navigate("/login")}>
+                                        Вход
+                                    </Button>
+                                    <Button variant="footer" onClick={() => navigate("/register")}>
+                                        Регистрация
+                                    </Button>
+                                </>
+                            )}
                         </nav>
                         <p className="landing-footer-copy">
                             МССК «Связист» · Спортивный клуб МТУСИ · {new Date().getFullYear()}

@@ -51,7 +51,6 @@
 
 .profile-action-button {
     border: none;
-    background: #d93025;
     color: #ffffff;
     border-radius: 24px;
     padding: 10px 18px;
@@ -61,7 +60,19 @@
     transition: background-color 0.15s ease, transform 0.15s ease;
 }
 
-.profile-action-button:hover {
+.profile-action-button--create {
+    background: var(--color-success);
+}
+
+.profile-action-button--create:hover {
+    background: #256b28;
+}
+
+.profile-action-button--logout {
+    background: #d93025;
+}
+
+.profile-action-button--logout:hover {
     background: #b82820;
 }
 

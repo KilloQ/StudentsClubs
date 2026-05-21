@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar";
+import { Button } from "../../shared/components";
 import { getAnnouncements, likeAnnouncement, unlikeAnnouncement, type Announcement } from "../../api/announcements";
 import { useAuth } from "../../contexts/useAuth";
 import { getErrorMessage } from "../../utils/errors";
 import "./NewsPage.css";
+
+const PAGE_SIZE = 10;
 
 export default function NewsPage() {
     const { user } = useAuth();
@@ -17,7 +20,7 @@ export default function NewsPage() {
     const load = async (nextPage: number) => {
         setLoading(true);
         try {
-            const response = await getAnnouncements({ page: nextPage, page_size: 10 });
+            const response = await getAnnouncements({ page: nextPage, page_size: PAGE_SIZE });
             setItems(response.items);
             setTotal(response.total);
             setPage(response.page);
@@ -47,7 +50,7 @@ export default function NewsPage() {
         }
     };
 
-    const pagesCount = Math.max(1, Math.ceil(total / 10));
+    const pagesCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
     return (
         <div className="news-page-container">
@@ -84,11 +87,27 @@ export default function NewsPage() {
                         ))}
                     </div>
                 )}
-                <div className="news-pagination">
-                    <button onClick={() => load(Math.max(1, page - 1))} disabled={page <= 1 || loading}>Назад</button>
-                    <span>{page} / {pagesCount}</span>
-                    <button onClick={() => load(Math.min(pagesCount, page + 1))} disabled={page >= pagesCount || loading}>Вперед</button>
-                </div>
+                {items.length > 0 && (
+                    <div className="pagination">
+                        <Button
+                            variant="primary"
+                            disabled={page <= 1 || loading}
+                            onClick={() => load(Math.max(1, page - 1))}
+                        >
+                            Назад
+                        </Button>
+                        <span className="page-info">
+                            Страница {page} из {pagesCount} (всего {total})
+                        </span>
+                        <Button
+                            variant="primary"
+                            disabled={page >= pagesCount || loading}
+                            onClick={() => load(Math.min(pagesCount, page + 1))}
+                        >
+                            Вперед
+                        </Button>
+                    </div>
+                )}
             </div>
         </div>
     );

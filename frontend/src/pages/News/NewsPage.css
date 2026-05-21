@@ -100,10 +100,27 @@
     background: #fee2e2;
 }
 
-.news-pagination {
+.news-page-content .pagination {
+    margin-top: 28px;
     display: flex;
+    align-items: center;
     gap: 14px;
     justify-content: center;
-    align-items: center;
-    margin-top: 18px;
+    flex-wrap: wrap;
+}
+
+.news-page-content .page-info {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+}
+
+@media (max-width: 560px) {
+    .news-page-content .pagination {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .news-page-content .page-info {
+        text-align: center;
+    }
 }

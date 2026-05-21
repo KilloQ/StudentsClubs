@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar";
 import {
     getClubStudents,
-    markAttendance,
+    getAttendanceByDate,
+    markAttendanceBulk,
     getClubSettings,
     updateClubSettings,
     addScheduleItem,
@@ -14,26 +15,43 @@ import {
 import type {
     StudentAttendanceInfo,
     ClubSettings,
-    MarkAttendanceRequest,
     ClubSettingsUpdate,
     ScheduleItemCreate
 } from "../../api/management";
 import { createAnnouncement, deleteAnnouncement, getAnnouncements, type Announcement } from "../../api/announcements";
+import { FileInput } from "../../shared/components";
 import { getErrorMessage } from "../../utils/errors";
+import { useToast } from "../../contexts/useToast";
+import {
+    formatScheduleSlot,
+    isDateOnScheduleWeekday,
+    isScheduleDayToday,
+    snapDateToScheduleWeekday,
+    suggestedDateForScheduleDay,
+    type ScheduleSlot,
+} from "../../utils/schedule";
 import "./ClubManagementPage.css";
+
+function todayIsoDate(): string {
+    return new Date().toISOString().slice(0, 10);
+}
 
 export default function ClubManagementPage() {
     const navigate = useNavigate();
     const { clubId } = useParams();
+    const { showToast } = useToast();
     const [activeTab, setActiveTab] = useState<"students" | "attendance" | "settings" | "announcements">("students");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
     const [students, setStudents] = useState<StudentAttendanceInfo[]>([]);
     
-    // Данные для вкладки Посещаемость
-    const [attendanceDate, setAttendanceDate] = useState("");
-    const [selectedStudentId, setSelectedStudentId] = useState<number | "">("");
+    const [attendanceDate, setAttendanceDate] = useState(todayIsoDate);
+    const [attendanceScheduleId, setAttendanceScheduleId] = useState<number | null>(null);
+    const attendanceScheduleInitialized = useRef(false);
+    const [presentStudentIds, setPresentStudentIds] = useState<Set<number>>(new Set());
+    const [selectedStudentIds, setSelectedStudentIds] = useState<Set<number>>(new Set());
+    const [attendanceLoading, setAttendanceLoading] = useState(false);
     const [markingAttendance, setMarkingAttendance] = useState(false);
 
     // Данные для вкладки Настройки
@@ -55,9 +73,22 @@ export default function ClubManagementPage() {
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            if (activeTab === "students") {
+            if (activeTab === "students" || activeTab === "attendance") {
                 const studentsData = await getClubStudents(Number(clubId));
                 setStudents(studentsData);
+                if (activeTab === "attendance") {
+                    const settingsData = await getClubSettings(Number(clubId));
+                    setSettings(settingsData);
+                    if (
+                        settingsData.schedules.length > 0 &&
+                        !attendanceScheduleInitialized.current
+                    ) {
+                        const first = settingsData.schedules[0];
+                        setAttendanceScheduleId(first.id);
+                        setAttendanceDate(suggestedDateForScheduleDay(first.day_of_week));
+                        attendanceScheduleInitialized.current = true;
+                    }
+                }
             } else if (activeTab === "settings") {
                 const settingsData = await getClubSettings(Number(clubId));
                 setSettings(settingsData);
@@ -80,35 +111,154 @@ export default function ClubManagementPage() {
         }
     }, [clubId, loadData]);
 
+    const scheduleSlots: ScheduleSlot[] = settings?.schedules ?? [];
+    const selectedScheduleSlot =
+        attendanceScheduleId != null
+            ? scheduleSlots.find((s) => s.id === attendanceScheduleId) ?? null
+            : null;
+
+    const loadAttendanceForDate = useCallback(async () => {
+        if (!clubId || !attendanceDate) return;
+        setAttendanceLoading(true);
+        try {
+            const data = await getAttendanceByDate(
+                Number(clubId),
+                attendanceDate,
+                attendanceScheduleId,
+            );
+            setPresentStudentIds(new Set(data.student_ids));
+            setSelectedStudentIds(new Set());
+            setError("");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Ошибка загрузки посещаемости"));
+        } finally {
+            setAttendanceLoading(false);
+        }
+    }, [clubId, attendanceDate, attendanceScheduleId]);
+
+    useEffect(() => {
+        if (activeTab === "attendance" && clubId) {
+            loadAttendanceForDate();
+        }
+    }, [activeTab, clubId, attendanceDate, attendanceScheduleId, loadAttendanceForDate]);
+
+    const handleAttendanceScheduleChange = (value: string) => {
+        attendanceScheduleInitialized.current = true;
+        if (value === "unbound") {
+            setAttendanceScheduleId(null);
+            return;
+        }
+        const scheduleId = Number(value);
+        const slot = scheduleSlots.find((s) => s.id === scheduleId);
+        setAttendanceScheduleId(scheduleId);
+        if (slot) {
+            setAttendanceDate(suggestedDateForScheduleDay(slot.day_of_week));
+        }
+    };
+
+    const handleAttendanceDateChange = (value: string) => {
+        if (!value) return;
+        if (selectedScheduleSlot) {
+            setAttendanceDate(
+                isDateOnScheduleWeekday(value, selectedScheduleSlot.day_of_week)
+                    ? value
+                    : snapDateToScheduleWeekday(value, selectedScheduleSlot.day_of_week),
+            );
+            return;
+        }
+        setAttendanceDate(value);
+    };
+
+    const handleAttendanceTodayClick = () => {
+        if (selectedScheduleSlot) {
+            if (isScheduleDayToday(selectedScheduleSlot.day_of_week)) {
+                setAttendanceDate(todayIsoDate());
+            } else {
+                setAttendanceDate(suggestedDateForScheduleDay(selectedScheduleSlot.day_of_week));
+            }
+            return;
+        }
+        setAttendanceDate(todayIsoDate());
+    };
+
     const handleBackClick = () => {
         navigate("/account/teacher");
     };
 
-    const handleMarkAttendance = async () => {
-        if (!attendanceDate || !selectedStudentId) {
-            setError("Заполните все поля");
-            return;
-        }
+    const unmarkedStudentIds = students
+        .map((s) => s.student_id)
+        .filter((id) => !presentStudentIds.has(id));
+
+    const toggleStudentSelection = (studentId: number) => {
+        if (presentStudentIds.has(studentId)) return;
+        setSelectedStudentIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(studentId)) {
+                next.delete(studentId);
+            } else {
+                next.add(studentId);
+            }
+            return next;
+        });
+    };
+
+    const handleSelectUnmarked = () => {
+        setSelectedStudentIds(new Set(unmarkedStudentIds));
+    };
+
+    const handleClearSelection = () => {
+        setSelectedStudentIds(new Set());
+    };
+
+    const markStudents = async (studentIds: number[], successLabel: string) => {
+        if (!clubId || !attendanceDate || studentIds.length === 0) return;
 
         setMarkingAttendance(true);
         try {
-            const request: MarkAttendanceRequest = {
-                student_id: Number(selectedStudentId),
-                date: attendanceDate
-            };
-            await markAttendance(Number(clubId), request);
-            setAttendanceDate("");
-            setSelectedStudentId("");
-            setError("");
-            // Обновляем список студентов
+            const result = await markAttendanceBulk(Number(clubId), {
+                date: attendanceDate,
+                student_ids: studentIds,
+                schedule_id: attendanceScheduleId,
+            });
+            await loadAttendanceForDate();
             if (activeTab === "students") {
                 await loadData();
             }
+            setError("");
+
+            if (result.marked_count > 0) {
+                const suffix =
+                    result.skipped_count > 0
+                        ? ` (${result.skipped_count} уже были отмечены)`
+                        : "";
+                showToast(`${successLabel}: ${result.marked_count}${suffix}`);
+            } else if (result.skipped_count > 0) {
+                showToast("Все выбранные студенты уже отмечены на эту дату", "info");
+            }
         } catch (err: unknown) {
-            setError(getErrorMessage(err, "Ошибка отметки посещения"));
+            const message = getErrorMessage(err, "Ошибка отметки посещения");
+            setError(message);
+            showToast(message, "error");
         } finally {
             setMarkingAttendance(false);
         }
+    };
+
+    const handleMarkSelected = () => {
+        const ids = [...selectedStudentIds].filter((id) => !presentStudentIds.has(id));
+        if (ids.length === 0) {
+            showToast("Выберите студентов для отметки", "info");
+            return;
+        }
+        void markStudents(ids, "Отмечено студентов");
+    };
+
+    const handleMarkAll = () => {
+        if (unmarkedStudentIds.length === 0) {
+            showToast("Все студенты уже отмечены на эту дату", "info");
+            return;
+        }
+        void markStudents(unmarkedStudentIds, "Отмечено студентов");
     };
 
     const handleSaveChanges = async () => {
@@ -125,8 +275,11 @@ export default function ClubManagementPage() {
             await updateClubSettings(Number(clubId), update);
             setError("");
             await loadData();
+            showToast("Настройки кружка сохранены");
         } catch (err: unknown) {
-            setError(getErrorMessage(err, "Ошибка сохранения"));
+            const message = getErrorMessage(err, "Ошибка сохранения");
+            setError(message);
+            showToast(message, "error");
         } finally {
             setSaving(false);
         }
@@ -148,8 +301,11 @@ export default function ClubManagementPage() {
             setNewSchedule({ day_of_week: "", start_time: "", location: "" });
             setError("");
             await loadData();
+            showToast("Занятие добавлено в расписание");
         } catch (err: unknown) {
-            setError(getErrorMessage(err, "Ошибка добавления занятия"));
+            const message = getErrorMessage(err, "Ошибка добавления занятия");
+            setError(message);
+            showToast(message, "error");
         }
     };
 
@@ -157,8 +313,11 @@ export default function ClubManagementPage() {
         try {
             await deleteScheduleItem(Number(clubId), scheduleId);
             await loadData();
+            showToast("Занятие удалено из расписания");
         } catch (err: unknown) {
-            setError(getErrorMessage(err, "Ошибка удаления занятия"));
+            const message = getErrorMessage(err, "Ошибка удаления занятия");
+            setError(message);
+            showToast(message, "error");
         }
     };
 
@@ -168,20 +327,19 @@ export default function ClubManagementPage() {
         }
     };
 
-    const handleClubImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (!clubId || !settings || !event.target.files?.length) return;
-        const file = event.target.files[0];
+    const handleClubImageUpload = async (file: File) => {
+        if (!clubId || !settings) return;
         const allowedTypes = ["image/jpeg", "image/png"];
         const maxSizeBytes = 5 * 1024 * 1024;
 
         if (!allowedTypes.includes(file.type)) {
             setError("Разрешены только JPG и PNG");
-            event.target.value = "";
+            showToast("Разрешены только JPG и PNG", "error");
             return;
         }
         if (file.size > maxSizeBytes) {
             setError("Файл слишком большой (максимум 5 МБ)");
-            event.target.value = "";
+            showToast("Файл слишком большой (максимум 5 МБ)", "error");
             return;
         }
 
@@ -190,11 +348,13 @@ export default function ClubManagementPage() {
         try {
             const response = await updateClubImage(Number(clubId), file);
             setSettings({ ...settings, image_url: response.image_url });
+            showToast("Изображение кружка обновлено");
         } catch (err: unknown) {
-            setError(getErrorMessage(err, "Ошибка загрузки изображения"));
+            const message = getErrorMessage(err, "Ошибка загрузки изображения");
+            setError(message);
+            showToast(message, "error");
         } finally {
             setImageUploading(false);
-            event.target.value = "";
         }
     };
 
@@ -214,8 +374,11 @@ export default function ClubManagementPage() {
             setAnnouncementForm({ title: "", description: "", image: null });
             await loadData();
             setError("");
+            showToast("Объявление опубликовано");
         } catch (err: unknown) {
-            setError(getErrorMessage(err, "Ошибка публикации объявления"));
+            const message = getErrorMessage(err, "Ошибка публикации объявления");
+            setError(message);
+            showToast(message, "error");
         } finally {
             setAnnouncementSaving(false);
         }
@@ -225,8 +388,11 @@ export default function ClubManagementPage() {
         try {
             await deleteAnnouncement(announcementId);
             await loadData();
+            showToast("Объявление удалено");
         } catch (err: unknown) {
-            setError(getErrorMessage(err, "Ошибка удаления объявления"));
+            const message = getErrorMessage(err, "Ошибка удаления объявления");
+            setError(message);
+            showToast(message, "error");
         }
     };
 
@@ -327,39 +493,159 @@ export default function ClubManagementPage() {
                     {activeTab === "attendance" && (
                         <div className="attendance-tab">
                             <h3 className="tab-title">Отметить посещаемость</h3>
-                            <div className="attendance-form">
+                            <p className="attendance-hint">
+                                Выберите занятие из расписания и дату проведения — затем отметьте присутствующих списком.
+                            </p>
+
+                            {scheduleSlots.length > 0 ? (
                                 <div className="form-group">
-                                    <label className="form-label">Дата занятия</label>
-                                    <input 
-                                        type="date" 
-                                        className="form-input"
-                                        value={attendanceDate}
-                                        onChange={(e) => setAttendanceDate(e.target.value)}
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Студент</label>
-                                    <select 
-                                        className="form-select"
-                                        value={selectedStudentId}
-                                        onChange={(e) => setSelectedStudentId(e.target.value ? Number(e.target.value) : "")}
+                                    <label className="form-label">Занятие по расписанию</label>
+                                    <select
+                                        className="form-select attendance-schedule-select"
+                                        value={
+                                            attendanceScheduleId != null
+                                                ? String(attendanceScheduleId)
+                                                : "unbound"
+                                        }
+                                        onChange={(e) => handleAttendanceScheduleChange(e.target.value)}
                                     >
-                                        <option value="">Выберите студента</option>
-                                        {students.map((student) => (
-                                            <option key={student.student_id} value={student.student_id}>
-                                                {student.student_name}
+                                        {scheduleSlots.map((slot) => (
+                                            <option key={slot.id} value={slot.id}>
+                                                {formatScheduleSlot(slot)}
                                             </option>
                                         ))}
+                                        <option value="unbound">Вне расписания</option>
                                     </select>
+                                    {selectedScheduleSlot ? (
+                                        <p className="attendance-schedule-note">
+                                            {isScheduleDayToday(selectedScheduleSlot.day_of_week)
+                                                ? "Сегодня день этого занятия по расписанию"
+                                                : `В календаре доступен только ${selectedScheduleSlot.day_of_week}`}
+                                        </p>
+                                    ) : null}
                                 </div>
-                                <button 
-                                    className="mark-attendance-button" 
-                                    onClick={handleMarkAttendance}
-                                    disabled={markingAttendance}
+                            ) : (
+                                <p className="attendance-schedule-note">
+                                    Добавьте расписание во вкладке «Настройки», чтобы привязывать посещаемость к занятиям.
+                                </p>
+                            )}
+
+                            <div className="attendance-date-row">
+                                <div className="form-group attendance-date-field">
+                                    <label className="form-label">Дата занятия</label>
+                                    <input
+                                        type="date"
+                                        className="form-input"
+                                        value={attendanceDate}
+                                        onChange={(e) => handleAttendanceDateChange(e.target.value)}
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    className="attendance-today-button"
+                                    onClick={handleAttendanceTodayClick}
                                 >
-                                    {markingAttendance ? "Отметка..." : "Отметить посещение"}
+                                    {selectedScheduleSlot &&
+                                    !isScheduleDayToday(selectedScheduleSlot.day_of_week)
+                                        ? "Ближайший день"
+                                        : "Сегодня"}
                                 </button>
+                                {selectedScheduleSlot ? (
+                                    <button
+                                        type="button"
+                                        className="attendance-today-button"
+                                        onClick={() =>
+                                            setAttendanceDate(
+                                                suggestedDateForScheduleDay(selectedScheduleSlot.day_of_week),
+                                            )
+                                        }
+                                    >
+                                        Дата по расписанию
+                                    </button>
+                                ) : null}
                             </div>
+
+                            <p className="attendance-summary">
+                                {selectedScheduleSlot
+                                    ? `${formatScheduleSlot(selectedScheduleSlot)} · `
+                                    : attendanceScheduleId === null && scheduleSlots.length > 0
+                                      ? "Вне расписания · "
+                                      : ""}
+                                {attendanceDate} · отмечено {presentStudentIds.size} из {students.length}
+                                {attendanceLoading ? " · загрузка..." : ""}
+                            </p>
+
+                            {students.length === 0 ? (
+                                <p className="attendance-empty">В кружке пока нет записанных студентов.</p>
+                            ) : (
+                                <>
+                                    <div className="attendance-toolbar">
+                                        <button
+                                            type="button"
+                                            className="attendance-toolbar-button"
+                                            onClick={handleSelectUnmarked}
+                                            disabled={unmarkedStudentIds.length === 0 || markingAttendance}
+                                        >
+                                            Выбрать неотмеченных
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="attendance-toolbar-button"
+                                            onClick={handleClearSelection}
+                                            disabled={selectedStudentIds.size === 0 || markingAttendance}
+                                        >
+                                            Сбросить выбор
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="mark-attendance-button"
+                                            onClick={handleMarkSelected}
+                                            disabled={markingAttendance || selectedStudentIds.size === 0}
+                                        >
+                                            {markingAttendance
+                                                ? "Отметка..."
+                                                : `Отметить выбранных (${selectedStudentIds.size})`}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="mark-attendance-button mark-attendance-button--secondary"
+                                            onClick={handleMarkAll}
+                                            disabled={markingAttendance || unmarkedStudentIds.length === 0}
+                                        >
+                                            Отметить всех
+                                        </button>
+                                    </div>
+
+                                    <ul className="attendance-roster">
+                                        {students.map((student) => {
+                                            const isPresent = presentStudentIds.has(student.student_id);
+                                            const isSelected = selectedStudentIds.has(student.student_id);
+                                            return (
+                                                <li
+                                                    key={student.student_id}
+                                                    className={`attendance-roster-item${isPresent ? " attendance-roster-item--present" : ""}`}
+                                                >
+                                                    <label className="attendance-roster-label">
+                                                        <input
+                                                            type="checkbox"
+                                                            className="attendance-roster-checkbox"
+                                                            checked={isPresent || isSelected}
+                                                            disabled={isPresent || markingAttendance}
+                                                            onChange={() => toggleStudentSelection(student.student_id)}
+                                                        />
+                                                        <span className="attendance-roster-name">
+                                                            {student.student_name}
+                                                        </span>
+                                                        {isPresent && (
+                                                            <span className="attendance-roster-badge">Присутствовал</span>
+                                                        )}
+                                                    </label>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                </>
+                            )}
                         </div>
                     )}
 
@@ -384,24 +670,15 @@ export default function ClubManagementPage() {
                                         onChange={(e) => setSettings({ ...settings, description: e.target.value })}
                                     />
                                 </div>
-                                <div className="form-group">
-                                    <label className="form-label">Изображение кружка</label>
-                                    {settings.image_url ? (
-                                        <img
-                                            src={settings.image_url}
-                                            alt={settings.title}
-                                            className="club-settings-image"
-                                        />
-                                    ) : null}
-                                    <input
-                                        type="file"
-                                        className="form-input"
-                                        accept="image/png,image/jpeg"
-                                        onChange={handleClubImageUpload}
-                                        disabled={imageUploading}
-                                    />
-                                    {imageUploading ? <div className="loading-message">Загрузка изображения...</div> : null}
-                                </div>
+                                <FileInput
+                                    label="Изображение кружка"
+                                    accept="image/png,image/jpeg"
+                                    previewUrl={settings.image_url}
+                                    onChange={(file) => file && handleClubImageUpload(file)}
+                                    disabled={imageUploading}
+                                    hint="JPG или PNG, до 5 МБ"
+                                    buttonText={imageUploading ? "Загрузка..." : "Загрузить изображение"}
+                                />
                                 <div className="form-group">
                                     <label className="form-label">Максимум студентов</label>
                                     <input 
@@ -502,11 +779,14 @@ export default function ClubManagementPage() {
                                         value={announcementForm.description}
                                         onChange={(e) => setAnnouncementForm({ ...announcementForm, description: e.target.value })}
                                     />
-                                    <input
-                                        type="file"
-                                        className="form-input"
+                                    <FileInput
                                         accept="image/png,image/jpeg"
-                                        onChange={(e) => setAnnouncementForm({ ...announcementForm, image: e.target.files?.[0] || null })}
+                                        value={announcementForm.image}
+                                        onChange={(file) =>
+                                            setAnnouncementForm({ ...announcementForm, image: file })
+                                        }
+                                        hint="JPG или PNG для объявления"
+                                        buttonText="Выбрать изображение"
                                     />
                                     <button className="add-schedule-button" onClick={handleCreateAnnouncement} disabled={announcementSaving}>
                                         {announcementSaving ? "Публикация..." : "Опубликовать"}

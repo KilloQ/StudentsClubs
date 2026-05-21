@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
 import { getErrorMessage } from "../../utils/errors";
 import { Button } from "../../shared/components";
+import Navbar from "../../components/Navbar/Navbar";
 import "./Auth.css";
 
 export default function LoginPage() {
@@ -49,8 +50,10 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="auth-container">
-            <div className="auth-card">
+        <div className="auth-page">
+            <Navbar />
+            <div className="auth-container">
+                <div className="auth-card">
                 <h2 className="auth-title">Студенческие кружки<br />МТУСИ</h2>
                 <p className="auth-subtitle">Войдите или зарегистрируйтесь</p>
 
@@ -104,6 +107,7 @@ export default function LoginPage() {
                         <button onClick={handleRegisterClick}>Перейти на страницу регистрации</button>
                     </div>
                 )}
+                </div>
             </div>
         </div>
     );
