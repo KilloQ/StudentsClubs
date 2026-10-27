@@ -1,0 +1,16 @@
+flowchart LR
+    Visitor[Посетитель / студент / преподаватель / администратор]
+    Browser[React SPA]
+    Proxy[Nginx reverse proxy]
+    API[FastAPI]
+    DB[(PostgreSQL)]
+    Store[(MinIO / S3)]
+    Weather[OpenWeather API]
+
+    Visitor --> Browser
+    Browser --> Proxy
+    Proxy -->|static files| Browser
+    Proxy -->|/api/*| API
+    API --> DB
+    API --> Store
+    API --> Weather
