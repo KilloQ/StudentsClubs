@@ -1,0 +1,21 @@
+flowchart TD
+    Start((Начало))
+    Browse[Посетитель открывает каталог]
+    Filter[Ищет кружок или выбирает фильтры]
+    Detail[Открывает карточку кружка]
+    Login{Студент авторизован?}
+    SignIn[Войти или зарегистрироваться]
+    Open{Набор открыт?}
+    Capacity{Есть свободные места?}
+    Join[Создать членство]
+    Result[Показать подтверждение записи]
+    Reject[Показать причину отказа]
+    End((Конец))
+
+    Start --> Browse --> Filter --> Detail --> Login
+    Login -- Нет --> SignIn --> Login
+    Login -- Да --> Open
+    Open -- Нет --> Reject --> End
+    Open -- Да --> Capacity
+    Capacity -- Нет --> Reject
+    Capacity -- Да --> Join --> Result --> End

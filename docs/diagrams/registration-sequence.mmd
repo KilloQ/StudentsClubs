@@ -1,0 +1,18 @@
+sequenceDiagram
+    actor Посетитель
+    participant UI as Веб-интерфейс
+    participant API as FastAPI
+    participant DB as PostgreSQL
+
+    Посетитель->>UI: Заполнить форму регистрации
+    UI->>API: POST /auth/register
+    alt Пароли не совпадают
+        API-->>UI: HTTP 400 «Пароли не совпадают»
+        UI-->>Посетитель: Показать ошибку
+        Note over API,DB: Учётная запись не создаётся
+    else Данные корректны
+        API->>DB: Проверить логин и сохранить студента
+        DB-->>API: Студент создан
+        API-->>UI: Данные пользователя, роль student
+        UI-->>Посетитель: Подтверждение регистрации
+    end

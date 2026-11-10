@@ -1,0 +1,30 @@
+flowchart LR
+    Visitor[Посетитель]
+    Student[Студент]
+    Teacher[Преподаватель]
+    Admin[Администратор]
+
+    subgraph System["Student Clubs"]
+        FR1([FR-1 Каталог, поиск и карточка])
+        FR2([FR-2 Регистрация и сеанс])
+        FR3([FR-3 Запись и отписка])
+        FR4([FR-4 Управление кружком и расписанием])
+        FR5([FR-5 Участники и посещаемость])
+        FR6([FR-6 Профиль студента])
+        FR7([FR-7 Роли и категории])
+        FR8([FR-8 Объявления и реакции])
+    end
+
+    Visitor --> FR1
+    Visitor --> FR2
+    Student --> FR1
+    Student --> FR2
+    Student --> FR3
+    Student --> FR6
+    Student --> FR8
+    Teacher --> FR4
+    Teacher --> FR5
+    Teacher --> FR8
+    Admin --> FR4
+    Admin --> FR5
+    Admin --> FR7
