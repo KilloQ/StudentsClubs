@@ -1,16 +1,23 @@
 flowchart LR
-    Visitor[Посетитель / студент / преподаватель / администратор]
-    Browser[React SPA]
-    Proxy[Nginx reverse proxy]
-    API[FastAPI]
+    Visitor[Посетитель]
+    Student[Студент]
+    Teacher[Преподаватель]
+    Admin[Администратор]
+
+    subgraph System["Граница системы Student Clubs"]
+        UI[Веб-интерфейс React]
+        API[API FastAPI]
+        UI -->|HTTP/JSON| API
+    end
+
     DB[(PostgreSQL)]
-    Store[(MinIO / S3)]
+    Files[(MinIO / S3)]
     Weather[OpenWeather API]
 
-    Visitor --> Browser
-    Browser --> Proxy
-    Proxy -->|static files| Browser
-    Proxy -->|/api/*| API
-    API --> DB
-    API --> Store
-    API --> Weather
+    Visitor --> UI
+    Student --> UI
+    Teacher --> UI
+    Admin --> UI
+    API -->|учётные записи, кружки, расписание| DB
+    API -->|файлы и изображения| Files
+    API -->|погодный запрос| Weather

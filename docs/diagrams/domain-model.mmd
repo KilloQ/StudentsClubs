@@ -1,0 +1,46 @@
+classDiagram
+    class User {
+        +int id
+        +string username
+        +string full_name
+        +string role
+        +bool is_teacher
+    }
+    class Club {
+        +int id
+        +string title
+        +string description
+        +string category
+        +int max_students
+        +bool recruitment_open
+        +int owner_id
+    }
+    class ClubMembership {
+        +int id
+        +int club_id
+        +int student_id
+        +date joined_at
+    }
+    class Schedule {
+        +int id
+        +int club_id
+        +string day_of_week
+        +time start_time
+        +string location
+    }
+    class Attendance {
+        +int id
+        +int club_id
+        +int student_id
+        +int schedule_id
+        +date date
+        +date marked_at
+    }
+
+    User "1" --> "0..*" Club : руководит
+    User "1" --> "0..*" ClubMembership : студент
+    Club "1" --> "0..*" ClubMembership : включает
+    Club "1" --> "0..*" Schedule : имеет занятия
+    User "1" --> "0..*" Attendance : посещает
+    Club "1" --> "0..*" Attendance : учитывает
+    Schedule "0..1" --> "0..*" Attendance : относится к
