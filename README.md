@@ -34,6 +34,8 @@
 
 Полный паспорт, карта функций и состояние инженерных практик находятся в [`docs/00-project.md`](docs/00-project.md). История изменений — [`CHANGELOG.md`](CHANGELOG.md).
 
+Контракт API для лабораторной работы 3: [`docs/interface-contract.md`](docs/interface-contract.md).
+
 ## Запуск
 
 ### Требования
